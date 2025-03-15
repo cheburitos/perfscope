@@ -1,4 +1,4 @@
-package com.tracelyp.ui;
+package com.perfscope.ui;
 
 import com.tracelyp.model.tables.Comms;
 import com.tracelyp.model.tables.CommThreads;
