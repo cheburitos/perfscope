@@ -24,6 +24,12 @@ import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.List;
+import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
+import javafx.geometry.Pos;
+import javafx.scene.control.TreeCell;
+import javafx.scene.control.Label;
 
 public class UIApplication extends Application {
 
@@ -114,9 +120,12 @@ public class UIApplication extends Application {
                 }
                 
                 // Create a placeholder for the main content
-                TreeView<String> callTreeView = new TreeView<>();
-                callTreeView.setRoot(new TreeItem<>("Call Tree"));
+                TreeView<CallTreeData> callTreeView = new TreeView<>();
+                callTreeView.setRoot(new TreeItem<>(new CallTreeData("Call Tree", 0L, 0L)));
                 callTreeView.setShowRoot(false);
+                
+                // Set up custom cell factory for the TreeView
+                callTreeView.setCellFactory(tv -> new CallTreeCell());
                 
                 // Set up thread selection listener
                 threadListView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
@@ -128,11 +137,14 @@ public class UIApplication extends Application {
                             Long threadId = selectedThread.value1();
                             
                             // Clear previous tree
-                            callTreeView.setRoot(new TreeItem<>("Call Tree"));
+                            callTreeView.setRoot(new TreeItem<>(new CallTreeData("Call Tree", 0L, 0L)));
                             callTreeView.setShowRoot(false);
                             
-                            // Load root nodes (parent_call_path_id = 1)
-                            loadCallTreeNodes(databasePath, comm.getId().longValue(), threadId, 1L, callTreeView.getRoot());
+                            // First, calculate the maximum time across all nodes
+                            Long maxTime = calculateMaxTime(databasePath, comm.getId().longValue(), threadId);
+                            
+                            // Load root nodes (parent_call_path_id = 1) with the max time
+                            loadCallTreeNodes(databasePath, comm.getId().longValue(), threadId, 1L, callTreeView.getRoot(), maxTime);
                         }
                     }
                 });
@@ -173,7 +185,119 @@ public class UIApplication extends Application {
         }
     }
 
-    private void loadCallTreeNodes(String databasePath, Long commId, Long threadId, Long parentCallPathId, TreeItem<String> parentItem) {
+    // Custom data class for call tree nodes
+    private static class CallTreeData {
+        private final String label;
+        private final Long callPathId;
+        private final Long time;
+        private Long maxTime = 1L;
+        
+        public CallTreeData(String label, Long callPathId, Long time) {
+            this.label = label;
+            this.callPathId = callPathId;
+            this.time = time;
+        }
+        
+        public String getLabel() {
+            return label;
+        }
+        
+        public Long getCallPathId() {
+            return callPathId;
+        }
+        
+        public Long getTime() {
+            return time;
+        }
+        
+        public void setMaxTime(Long maxTime) {
+            this.maxTime = maxTime;
+        }
+        
+        public double getTimeRatio() {
+            return (double) time / maxTime;
+        }
+        
+        @Override
+        public String toString() {
+            return label;
+        }
+    }
+
+    // Custom cell implementation for the call tree
+    private static class CallTreeCell extends TreeCell<CallTreeData> {
+        private final StackPane stack = new StackPane();
+        private final Rectangle timeBar = new Rectangle();
+        private final Label label = new Label();
+        
+        public CallTreeCell() {
+            timeBar.setHeight(20); // Fixed height for the bar
+            timeBar.setFill(Color.LIGHTBLUE.deriveColor(0, 1, 1, 0.3)); // Semi-transparent light blue
+            
+            stack.getChildren().addAll(timeBar, label);
+            stack.setAlignment(Pos.CENTER_LEFT);
+            
+            // Make sure the bar is behind the text
+            StackPane.setAlignment(timeBar, Pos.CENTER_LEFT);
+            timeBar.setTranslateX(0); // Start from the left edge
+        }
+        
+        @Override
+        protected void updateItem(CallTreeData item, boolean empty) {
+            super.updateItem(item, empty);
+            
+            if (empty || item == null) {
+                setText(null);
+                setGraphic(null);
+            } else {
+                label.setText(item.getLabel());
+                
+                // Calculate width based on the time ratio
+                double ratio = item.getTimeRatio();
+                // Get the width of the tree cell (approximation)
+                double maxWidth = getTreeView().getWidth() - (getTreeView().getRoot().getChildren().size() > 0 ? 
+                                                             getTreeView().getRoot().getChildren().get(0).getGraphic() != null ? 
+                                                             40 : 20 : 20);
+                timeBar.setWidth(Math.max(5, ratio * maxWidth)); // Minimum width of 5 pixels
+                
+                setGraphic(stack);
+            }
+        }
+    }
+
+    private Long calculateMaxTime(String databasePath, Long commId, Long threadId) {
+        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + databasePath)) {
+            DSLContext queryContext = DSL.using(conn, SQLDialect.SQLITE);
+            
+            // Query for call tree nodes
+            Result<?> nodes = queryContext.fetch(
+                "SELECT SUM(return_time - call_time)" +
+                "FROM calls " +
+                "INNER JOIN call_paths ON calls.call_path_id = call_paths.id " +
+                "INNER JOIN symbols ON call_paths.symbol_id = symbols.id " +
+                "INNER JOIN dsos ON symbols.dso_id = dsos.id " +
+                "WHERE parent_call_path_id = ? " +
+                "AND comm_id = ? " +
+                "AND thread_id = ? " +
+                "GROUP BY call_path_id, name, short_name " +
+                "ORDER BY call_time, call_path_id",
+                1L, commId, threadId
+            );
+            
+            Long maxTime = 0L;
+            for (org.jooq.Record record : nodes) {
+                maxTime += record.get(0, Long.class);
+            }
+            return maxTime != 0L ? maxTime: 1L; // Avoid division by zero
+        } catch (Exception e) {
+            System.err.println("Error calculating max time: " + e.getMessage());
+            e.printStackTrace();
+            return 1L; // Default to 1 on error
+        }
+    }
+
+    private void loadCallTreeNodes(String databasePath, Long commId, Long threadId, Long parentCallPathId, 
+                                  TreeItem<CallTreeData> parentItem, Long maxTime) {
         try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + databasePath)) {
             DSLContext queryContext = DSL.using(conn, SQLDialect.SQLITE);
             
@@ -208,23 +332,26 @@ public class UIApplication extends Application {
                 String nodeText = String.format("%s [%d calls, %d ns]", name, count, totalTime);
                 
                 // Create tree item with custom data
-                CallTreeItem item = new CallTreeItem(nodeText, callPathId);
+                CallTreeData nodeData = new CallTreeData(nodeText, callPathId, totalTime);
+                nodeData.setMaxTime(maxTime);
+                
+                TreeItem<CallTreeData> item = new TreeItem<>(nodeData);
                 
                 // Add a dummy child to show expand arrow (will be replaced when expanded)
-                item.getChildren().add(new TreeItem<>("Loading..."));
+                item.getChildren().add(new TreeItem<>(new CallTreeData("Loading...", 0L, 0L)));
                 
                 item.expandedProperty().addListener((observable, oldValue, newValue) -> {
                     if (newValue && item.getChildren().size() == 1 && 
-                        item.getChildren().get(0).getValue().equals("Loading...")) {
+                        item.getChildren().get(0).getValue().getLabel().equals("Loading...")) {
                         // Clear dummy child
                         item.getChildren().clear();
                         
-                        // Load children
-                        loadCallTreeNodes(databasePath, commId, threadId, item.getCallPathId(), item);
+                        // Load children - pass down the same maxTime
+                        loadCallTreeNodes(databasePath, commId, threadId, item.getValue().getCallPathId(), item, maxTime);
                         
                         // If no children were added, add a placeholder
                         if (item.getChildren().isEmpty()) {
-                            item.getChildren().add(new TreeItem<>("(No calls)"));
+                            item.getChildren().add(new TreeItem<>(new CallTreeData("(No calls)", 0L, 0L)));
                         }
                     }
                 });
@@ -236,21 +363,7 @@ public class UIApplication extends Application {
             e.printStackTrace();
             
             // Add error node
-            parentItem.getChildren().add(new TreeItem<>("Error loading data: " + e.getMessage()));
-        }
-    }
-
-    // Custom TreeItem class to store call path ID
-    private static class CallTreeItem extends TreeItem<String> {
-        private final Long callPathId;
-        
-        public CallTreeItem(String value, Long callPathId) {
-            super(value);
-            this.callPathId = callPathId;
-        }
-        
-        public Long getCallPathId() {
-            return callPathId;
+            parentItem.getChildren().add(new TreeItem<>(new CallTreeData("Error loading data: " + e.getMessage(), 0L, 0L)));
         }
     }
 }
