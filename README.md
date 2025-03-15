@@ -12,7 +12,7 @@ Then dump all data to SQLite using [export-to-sqlite.py](https://github.com/torv
 
 Open database in perfscope:
 
-![perfscope](https://github.com/0xaa4eb/perfscope/blob/master/docs/images/example.png)
+![perfscope](https://github.com/0xaa4eb/perfscope/blob/main/docs/images/example.png)
 
 Perfscope is similar to the script [exported-sql-viewer.py](https://github.com/torvalds/linux/blob/master/tools/perf/scripts/python/exported-sql-viewer.py) which
 supports building call tree. Implementing additional staff is in progress.
