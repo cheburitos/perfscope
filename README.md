@@ -20,9 +20,9 @@ supports building call tree. Implementing additional staff is in progress.
 
 ### Build
 
-Generate JOOQ pojos `./gradlew generateJooq`
-Build `./gradlew clean generateJooq build`
+* Generate JOOQ pojos `./gradlew generateJooq`
+* Build `./gradlew clean generateJooq build`
 
-### How to use
-
-TBD
+### See also 
+* [perf ptrace example](https://perfwiki.github.io/main/perf-tools-support-for-intel-processor-trace/)
+* [magic-trace](https://github.com/janestreet/magic-trace)
