@@ -1,0 +1,193 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'org.jetbrains.kotlin.jvm' version '1.9.22'
+    id 'org.jetbrains.kotlin.plugin.lombok' version '1.9.22'
+    id 'org.jetbrains.kotlin.plugin.serialization' version '1.9.22'
+    id 'io.freefair.lombok' version '8.12.1'
+    id 'org.openjfx.javafxplugin' version '0.0.14'
+    id 'nu.studer.jooq' version '9.0'
+}
+
+repositories {
+    mavenCentral()
+    maven { url 'https://jitpack.io' }
+    maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
+}
+
+jooq {
+    configurations {
+        main {
+            generateSchemaSourceOnCompilation = true  // default (can be omitted)
+
+            generationTool {
+                jdbc {
+                    driver = 'org.sqlite.JDBC'
+                    url = 'jdbc:sqlite:examples/pt_example'
+                }
+                generator {
+                    name = 'org.jooq.codegen.DefaultGenerator'
+                    database {
+                        name = 'org.jooq.meta.sqlite.SQLiteDatabase'
+                        forcedTypes {
+                            forcedType {
+                                name = 'varchar'
+                                includeExpression = '.*'
+                                includeTypes = 'JSONB?'
+                            }
+                            forcedType {
+                                name = 'varchar'
+                                includeExpression = '.*'
+                                includeTypes = 'INET'
+                            }
+                        }
+                    }
+                    generate {
+                        deprecated = false
+                        records = true
+                        immutablePojos = true
+                        fluentSetters = true
+                    }
+                    target {
+                        packageName = 'com.perfscope.model'
+                        directory = 'src/jooq/main'
+                    }
+                    strategy.name = 'org.jooq.codegen.DefaultGeneratorStrategy'
+                }
+            }
+        }
+    }
+}
+
+group = 'org.example'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation "javax.annotation:javax.annotation-api:1.3.2"
+    implementation group: 'org.jetbrains.kotlinx', name: 'kotlinx-serialization-json', version: '1.4.1'
+
+    implementation group: 'org.springframework', name: 'spring-beans', version: '6.2.3'
+    implementation group: 'org.springframework', name: 'spring-context', version: '6.2.3'
+    implementation group: 'org.springframework', name: 'spring-core', version: '6.2.3'
+
+    implementation 'org.jooq:jooq:3.18.4'
+    implementation 'org.jooq:jooq-meta:3.18.4'
+    implementation 'org.jooq:jooq-codegen:3.18.4'
+    
+    implementation 'org.xerial:sqlite-jdbc:3.42.0.0'
+    jooqGenerator 'org.xerial:sqlite-jdbc:3.43.0.0'
+
+    implementation group: 'org.rocksdb', name: 'rocksdbjni', version: '9.7.3'
+
+    compileOnly group: 'org.projectlombok', name: 'lombok', version: '1.18.28'
+    annotationProcessor group: 'org.projectlombok', name: 'lombok', version: '1.18.28'
+
+    implementation "org.jetbrains.kotlin:kotlin-stdlib"
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+mainClassName = 'com.perfscope.ui.UIApplication'
+
+test {
+    useJUnitPlatform()
+}
+
+def openjfxVersion = "17.0.1"
+
+def javafxModules = [
+        'javafx.controls',
+        'javafx.fxml',
+        'javafx.swing'
+]
+
+String jarPlatform = project.findProperty("platform")
+
+javafx {
+    version = openjfxVersion
+    modules = javafxModules
+}
+if (jarPlatform != null) {
+    javafx {
+        platform = jarPlatform
+    }
+}
+
+dependencies {
+    javafxModules.each {
+        def javafxModuleArtifact = it.replace(".", "-")
+        if (jarPlatform != null) {
+            runtimeOnly "org.openjfx:$javafxModuleArtifact:$javafx.version:$jarPlatform"
+        }
+    }
+}
+
+sourceSets {
+    main.java.srcDirs = [
+            'src/jooq/main',
+            'src/main/java',
+            '../src/main/java',
+            'src/main/kotlin',
+            '../src/main/kotlin'
+    ]
+    test {
+        kotlin {
+            srcDirs = ['src/test/kotlin']
+        }
+    }
+}
+
+task fatJar(type: Jar) {
+    manifest {
+        attributes(
+                'Main-Class': mainClassName,
+                'Implementation-Title': "Perfscope",
+                'Implementation-Version': rootProject.version,
+                'Built-By': '0xaa4eb',
+                'Built-Date': new Date(),
+                'Built-JDK': System.getProperty('java.version')
+        )
+    }
+    filesMatching(['*.dll'], { fileCopyDetails ->
+        if (platform != null && platform != "win") {
+            fileCopyDetails.exclude()
+        }
+    })
+    filesMatching(['*.so', '*.jnilib'], { fileCopyDetails ->
+        def fileName = fileCopyDetails.name
+        if (platform != null && fileName.startsWith("librocksdbjni")) {
+            if (fileName.contains("librocksdbjni-linux32") && platform != "linux") {
+                fileCopyDetails.exclude()
+            }
+            if (fileName.contains("librocksdbjni-linux64") && platform != "linux") {
+                fileCopyDetails.exclude()
+            }
+            if (fileName.contains("librocksdbjni-linux-aarch64") && platform != "linux-aarch64") {
+                fileCopyDetails.exclude()
+            }
+            if (fileName.contains("librocksdbjni-osx-x86_64") && platform != "mac") {
+                fileCopyDetails.exclude()
+            }
+            if (fileName.contains("librocksdbjni-osx-arm64") && platform != "mac-aarch64") {
+                fileCopyDetails.exclude()
+            }
+            // unsupported platforms
+            if (fileName.contains("librocksdbjni-linux-s390x") || fileName.contains("librocksdbjni-linux-ppc64le")) {
+                fileCopyDetails.exclude()
+            }
+        }
+    })
+    filesMatching(['librocksdbjni-linux-aarch64.*'], { fileCopyDetails ->
+        if (platform != null && platform != "linux-aarch64") {
+            fileCopyDetails.exclude()
+        }
+    })
+    group = 'build'
+    archiveFileName = 'perfscope'
+    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
