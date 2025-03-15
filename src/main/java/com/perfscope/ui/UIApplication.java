@@ -1,9 +1,9 @@
 package com.perfscope.ui;
 
-import com.tracelyp.model.tables.Comms;
-import com.tracelyp.model.tables.CommThreads;
-import com.tracelyp.model.tables.Threads;
-import com.tracelyp.model.tables.records.CommsRecord;
+import com.perfscope.model.tables.Comms;
+import com.perfscope.model.tables.CommThreads;
+import com.perfscope.model.tables.Threads;
+import com.perfscope.model.tables.records.CommsRecord;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -37,7 +37,7 @@ public class UIApplication extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         stage = primaryStage;
-        stage.setTitle("tracelyp");
+        stage.setTitle("perfscope");
         
         BorderPane root = new BorderPane();
         
@@ -56,11 +56,7 @@ public class UIApplication extends Application {
         // Create tab pane for database content
         TabPane tabPane = new TabPane();
         root.setCenter(tabPane);
-        
-        // Load the default database
-//        loadDatabase(currentDatabasePath, tabPane);
-        
-        // Set up the scene
+
         Scene scene = new Scene(root, 800, 600);
         stage.setScene(scene);
         stage.show();
@@ -75,15 +71,7 @@ public class UIApplication extends Application {
         if (initialDir != null && initialDir.exists()) {
             fileChooser.setInitialDirectory(initialDir);
         }
-        
-/*         // Set file extension filters
-        FileChooser.ExtensionFilter sqliteFilter = 
-            new FileChooser.ExtensionFilter("SQLite Database (*.db, *.sqlite, *.sqlite3)", "*.db", "*.sqlite", "*.sqlite3");
-        FileChooser.ExtensionFilter allFilter = 
-            new FileChooser.ExtensionFilter("All Files", "*.*");
-        fileChooser.getExtensionFilters().addAll(sqliteFilter, allFilter);
- */        
-        // Show open file dialog
+
         File file = fileChooser.showOpenDialog(stage);
         
         if (file != null) {
@@ -225,7 +213,6 @@ public class UIApplication extends Application {
                 // Add a dummy child to show expand arrow (will be replaced when expanded)
                 item.getChildren().add(new TreeItem<>("Loading..."));
                 
-                // Add expand listener
                 item.expandedProperty().addListener((observable, oldValue, newValue) -> {
                     if (newValue && item.getChildren().size() == 1 && 
                         item.getChildren().get(0).getValue().equals("Loading...")) {
