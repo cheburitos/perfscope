@@ -82,7 +82,7 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter'
 }
 
-mainClassName = 'com.perfscope.ui.UIApplication'
+mainClassName = 'com.perfscope.App'
 
 test {
     useJUnitPlatform()

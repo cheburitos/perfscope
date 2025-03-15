@@ -1,4 +1,4 @@
-package com.perfscope.ui;
+package com.perfscope;
 
 import com.perfscope.model.tables.Comms;
 import com.perfscope.model.tables.CommThreads;
@@ -31,7 +31,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.TreeCell;
 import javafx.scene.control.Label;
 
-public class UIApplication extends Application {
+public class App extends Application {
 
     public static Stage stage;
     private String currentDatabasePath = "examples/pt_example"; // Default database path
