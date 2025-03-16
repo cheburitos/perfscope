@@ -4,31 +4,29 @@ import com.perfscope.model.tables.Comms;
 import com.perfscope.model.tables.CommThreads;
 import com.perfscope.model.tables.Threads;
 import com.perfscope.model.tables.records.CommsRecord;
-import com.perfscope.ui.DatabaseView;
 
-import javafx.scene.control.Label;
-import javafx.scene.control.Tab;
-import javafx.scene.control.TabPane;
 import org.jooq.DSLContext;
 import org.jooq.Record3;
 import org.jooq.Result;
 import org.jooq.SQLDialect;
 import org.jooq.impl.DSL;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class DatabaseLoader {
     
     private static final Logger logger = LoggerFactory.getLogger(DatabaseLoader.class);
     
-    public void loadDatabase(String databasePath, TabPane tabPane, DatabaseView databaseView) {
-        logger.info("Loading database from: {}", databasePath);
+    public List<CommData> loadCommsWithCalls(String databasePath) throws SQLException {
+        logger.info("Loading comms with calls from: {}", databasePath);
+        List<CommData> result = new ArrayList<>();
+        
         try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + databasePath)) {
             DSLContext context = DSL.using(conn, SQLDialect.SQLITE);
             
@@ -40,9 +38,6 @@ public class DatabaseLoader {
             logger.info("Found {} comms with calls", commsWithCalls.size());
             
             for (CommsRecord comm : commsWithCalls) {
-                Tab tab = new Tab();
-                tab.setText(comm.getComm() + " (" + comm.getId() + ")");
-                
                 Result<Record3<Long, Integer, Integer>> threads = context
                     .select(CommThreads.COMM_THREADS.THREAD_ID, Threads.THREADS.PID, Threads.THREADS.TID)
                     .from(CommThreads.COMM_THREADS)
@@ -50,18 +45,11 @@ public class DatabaseLoader {
                     .where(CommThreads.COMM_THREADS.COMM_ID.eq(comm.getId().longValue()))
                     .fetch();
                 
-                tab.setContent(databaseView.createCommView(databasePath, comm, threads));
-                tab.setClosable(false);
-                tabPane.getTabs().add(tab);
+                result.add(new CommData(comm, threads));
             }
-        } catch (Exception e) {
-            logger.error("Error loading database: {}", e.getMessage(), e);
-            // Handle database connection errors
-            Tab errorTab = new Tab("Error");
-            errorTab.setContent(new Label("Database error: " + e.getMessage()));
-            errorTab.setClosable(false);
-            tabPane.getTabs().add(errorTab);
         }
+        
+        return result;
     }
     
     public Long calculateMaxTime(String databasePath, Long commId, Long threadId) {
@@ -70,7 +58,7 @@ public class DatabaseLoader {
             DSLContext queryContext = DSL.using(conn, SQLDialect.SQLITE);
 
             Result<?> nodes = queryContext.fetch(
-                "SELECT SUM(return_time - call_time)" +
+                "SELECT SUM(return_time - call_time) " +
                 "FROM calls " +
                 "INNER JOIN call_paths ON calls.call_path_id = call_paths.id " +
                 "INNER JOIN symbols ON call_paths.symbol_id = symbols.id " +

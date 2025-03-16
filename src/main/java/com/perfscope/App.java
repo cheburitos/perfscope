@@ -16,9 +16,12 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 
 import java.io.File;
+import java.sql.SQLException;
+import java.util.List;
 
 import com.perfscope.ui.DatabaseView;
 import com.perfscope.model.DatabaseLoader;
+import com.perfscope.model.CommData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -95,6 +98,7 @@ public class App extends Application {
             imageView.setFitWidth(size);
             return imageView;
         } catch (Exception e) {
+            logger.warn("Could not load icon: {}", name, e);
             return null;
         }
     }
@@ -113,15 +117,43 @@ public class App extends Application {
         
         if (file != null) {
             currentDatabasePath = file.getAbsolutePath();
-            logger.info("Opening database: {}", file.getAbsolutePath());
+            logger.info("Opening database: {}", currentDatabasePath);
             
-            // Clear existing tabs and load the new database
+            // Clear existing tabs
             TabPane tabPane = (TabPane) ((BorderPane) stage.getScene().getRoot()).getCenter();
             tabPane.getTabs().clear();
             
             updateStatus("Loading database: " + file.getName());
-            databaseLoader.loadDatabase(currentDatabasePath, tabPane, databaseView);
-            updateStatus("Database loaded: " + file.getName());
+            
+            // Load database in a background thread
+            new Thread(() -> {
+                try {
+                    List<CommData> commsWithCalls = databaseLoader.loadCommsWithCalls(currentDatabasePath);
+                    
+                    // Update UI on JavaFX thread
+                    Platform.runLater(() -> {
+                        for (CommData commData : commsWithCalls) {
+                            Tab tab = new Tab();
+                            tab.setText(commData.getComm().getComm() + " (" + commData.getComm().getId() + ")");
+                            tab.setContent(databaseView.createCommView(currentDatabasePath, commData));
+                            tab.setClosable(false);
+                            tabPane.getTabs().add(tab);
+                        }
+                        updateStatus("Database loaded: " + file.getName());
+                    });
+                } catch (SQLException e) {
+                    logger.error("Error loading database: {}", e.getMessage(), e);
+                    
+                    // Update UI on JavaFX thread
+                    Platform.runLater(() -> {
+                        Tab errorTab = new Tab("Error");
+                        errorTab.setContent(new Label("Database error: " + e.getMessage()));
+                        errorTab.setClosable(false);
+                        tabPane.getTabs().add(errorTab);
+                        updateStatus("Error loading database");
+                    });
+                }
+            }).start();
         }
     }
     

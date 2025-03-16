@@ -1,8 +1,8 @@
 package com.perfscope.ui;
 
 import com.perfscope.model.CallTreeData;
+import com.perfscope.model.CommData;
 import com.perfscope.model.DatabaseLoader;
-import com.perfscope.model.tables.records.CommsRecord;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -13,17 +13,12 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
-import org.jooq.DSLContext;
 import org.jooq.Record3;
-import org.jooq.Result;
-import org.jooq.SQLDialect;
-import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.List;
 
 public class DatabaseView {
     
@@ -31,12 +26,12 @@ public class DatabaseView {
     
     private DatabaseLoader databaseLoader = new DatabaseLoader();
     
-    public BorderPane createCommView(String databasePath, CommsRecord comm, Result<Record3<Long, Integer, Integer>> threads) {
+    public BorderPane createCommView(String databasePath, CommData commData) {
         BorderPane tabContent = new BorderPane();
         
         ListView<String> threadListView = new ListView<>();
         
-        for (Record3<Long, Integer, Integer> thread : threads) {
+        for (Record3<Long, Integer, Integer> thread : commData.getThreads()) {
             threadListView.getItems().add(String.format("PID: %d, TID: %d", 
                 thread.value2(), thread.value3()));
         }
@@ -54,8 +49,8 @@ public class DatabaseView {
             if (newValue != null) {
                 // Get the selected thread ID
                 int selectedIndex = threadListView.getSelectionModel().getSelectedIndex();
-                if (selectedIndex >= 0 && selectedIndex < threads.size()) {
-                    Record3<Long, Integer, Integer> selectedThread = threads.get(selectedIndex);
+                if (selectedIndex >= 0 && selectedIndex < commData.getThreads().size()) {
+                    Record3<Long, Integer, Integer> selectedThread = commData.getThreads().get(selectedIndex);
                     Long threadId = selectedThread.value1();
                     
                     // Clear previous tree
@@ -63,10 +58,10 @@ public class DatabaseView {
                     callTreeView.setShowRoot(false);
                     
                     // First, calculate the maximum time across all nodes
-                    Long maxTime = databaseLoader.calculateMaxTime(databasePath, comm.getId().longValue(), threadId);
+                    Long maxTime = databaseLoader.calculateMaxTime(databasePath, commData.getComm().getId().longValue(), threadId);
                     
                     // Load root nodes (parent_call_path_id = 1) with the max time
-                    loadCallTreeNodes(databasePath, comm.getId().longValue(), threadId, 1L, callTreeView.getRoot(), maxTime);
+                    loadCallTreeNodes(databasePath, commData.getComm().getId().longValue(), threadId, 1L, callTreeView.getRoot(), maxTime);
                 }
             }
         });
@@ -97,36 +92,36 @@ public class DatabaseView {
     
     private void loadCallTreeNodes(String databasePath, Long commId, Long threadId, Long parentCallPathId, 
                                   TreeItem<CallTreeData> parentItem, Long maxTime) {
-        logger.debug("Loading call tree nodes for comm: {}, thread: {}, parent: {}", 
-                    commId, threadId, parentCallPathId);
         try {
-            for (CallTreeData nodeData : databaseLoader.loadCallTreeNodes(databasePath, commId, threadId, parentCallPathId)) {
+            List<CallTreeData> nodes = databaseLoader.loadCallTreeNodes(databasePath, commId, threadId, parentCallPathId);
+            
+            for (CallTreeData nodeData : nodes) {
+                // Set the max time for proper scaling
                 nodeData.setMaxTime(maxTime);
-
+                
                 TreeItem<CallTreeData> item = new TreeItem<>(nodeData);
-
+                
                 // Add a dummy child to show expand arrow (will be replaced when expanded)
                 item.getChildren().add(new TreeItem<>(new CallTreeData("Loading...", 0L, 0L)));
-
+                
                 item.expandedProperty().addListener((observable, oldValue, newValue) -> {
-                    if (newValue && item.getChildren().size() == 1 &&
-                            item.getChildren().get(0).getValue().getLabel().equals("Loading...")) {
+                    if (newValue && item.getChildren().size() == 1 && 
+                        item.getChildren().get(0).getValue().getLabel().equals("Loading...")) {
                         // Clear dummy child
                         item.getChildren().clear();
-
+                        
                         // Load children - pass down the same maxTime
                         loadCallTreeNodes(databasePath, commId, threadId, item.getValue().getCallPathId(), item, maxTime);
-
+                        
                         // If no children were added, add a placeholder
                         if (item.getChildren().isEmpty()) {
                             item.getChildren().add(new TreeItem<>(new CallTreeData("(No calls)", 0L, 0L)));
                         }
                     }
                 });
-
+                
                 parentItem.getChildren().add(item);
             }
-
         } catch (SQLException e) {
             logger.error("Error loading call tree nodes: {}", e.getMessage(), e);
             
