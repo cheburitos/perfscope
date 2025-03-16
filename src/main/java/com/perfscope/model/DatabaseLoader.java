@@ -19,9 +19,15 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class DatabaseLoader {
     
+    private static final Logger logger = LoggerFactory.getLogger(DatabaseLoader.class);
+    
     public void loadDatabase(String databasePath, TabPane tabPane, DatabaseView databaseView) {
+        logger.info("Loading database from: {}", databasePath);
         try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + databasePath)) {
             DSLContext context = DSL.using(conn, SQLDialect.SQLITE);
             
@@ -29,6 +35,8 @@ public class DatabaseLoader {
                 .selectFrom(Comms.COMMS)
                 .where(Comms.COMMS.HAS_CALLS.eq(true))
                 .fetch();
+            
+            logger.info("Found {} comms with calls", commsWithCalls.size());
             
             for (CommsRecord comm : commsWithCalls) {
                 Tab tab = new Tab();
@@ -46,16 +54,17 @@ public class DatabaseLoader {
                 tabPane.getTabs().add(tab);
             }
         } catch (Exception e) {
+            logger.error("Error loading database: {}", e.getMessage(), e);
             // Handle database connection errors
             Tab errorTab = new Tab("Error");
             errorTab.setContent(new Label("Database error: " + e.getMessage()));
             errorTab.setClosable(false);
             tabPane.getTabs().add(errorTab);
-            e.printStackTrace();
         }
     }
     
     public Long calculateMaxTime(String databasePath, Long commId, Long threadId) {
+        logger.debug("Calculating max time for comm: {}, thread: {}", commId, threadId);
         try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + databasePath)) {
             DSLContext queryContext = DSL.using(conn, SQLDialect.SQLITE);
             
@@ -80,8 +89,7 @@ public class DatabaseLoader {
             }
             return maxTime != 0L ? maxTime: 1L; // Avoid division by zero
         } catch (Exception e) {
-            System.err.println("Error calculating max time: " + e.getMessage());
-            e.printStackTrace();
+            logger.error("Error calculating max time: {}", e.getMessage(), e);
             return 1L; // Default to 1 on error
         }
     }

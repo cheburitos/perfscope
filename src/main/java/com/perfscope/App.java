@@ -19,8 +19,12 @@ import java.io.File;
 
 import com.perfscope.ui.DatabaseView;
 import com.perfscope.model.DatabaseLoader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class App extends Application {
+
+    private static final Logger logger = LoggerFactory.getLogger(App.class);
 
     public static Stage stage;
     private String currentDatabasePath = "examples/pt_example"; // Default database path
@@ -28,11 +32,13 @@ public class App extends Application {
     private DatabaseView databaseView;
 
     public static void main(String[] args) {
+        logger.info("Starting PerfScope application");
         launch(args);
     }
 
     @Override
     public void start(Stage primaryStage) throws Exception {
+        logger.info("Initializing application UI");
         stage = primaryStage;
         stage.setTitle("PerfScope");
         
@@ -107,6 +113,7 @@ public class App extends Application {
         
         if (file != null) {
             currentDatabasePath = file.getAbsolutePath();
+            logger.info("Opening database: {}", file.getAbsolutePath());
             
             // Clear existing tabs and load the new database
             TabPane tabPane = (TabPane) ((BorderPane) stage.getScene().getRoot()).getCenter();

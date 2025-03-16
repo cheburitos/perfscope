@@ -18,11 +18,15 @@ import org.jooq.Record3;
 import org.jooq.Result;
 import org.jooq.SQLDialect;
 import org.jooq.impl.DSL;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 
 public class DatabaseView {
+    
+    private static final Logger logger = LoggerFactory.getLogger(DatabaseView.class);
     
     private DatabaseLoader databaseLoader = new DatabaseLoader();
     
@@ -92,6 +96,8 @@ public class DatabaseView {
     
     private void loadCallTreeNodes(String databasePath, Long commId, Long threadId, Long parentCallPathId, 
                                   TreeItem<CallTreeData> parentItem, Long maxTime) {
+        logger.debug("Loading call tree nodes for comm: {}, thread: {}, parent: {}", 
+                    commId, threadId, parentCallPathId);
         try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + databasePath)) {
             DSLContext queryContext = DSL.using(conn, SQLDialect.SQLITE);
             
@@ -153,8 +159,7 @@ public class DatabaseView {
                 parentItem.getChildren().add(item);
             }
         } catch (Exception e) {
-            System.err.println("Error loading call tree nodes: " + e.getMessage());
-            e.printStackTrace();
+            logger.error("Error loading call tree nodes: {}", e.getMessage(), e);
             
             // Add error node
             parentItem.getChildren().add(new TreeItem<>(new CallTreeData("Error loading data: " + e.getMessage(), 0L, 0L)));
