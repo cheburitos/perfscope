@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.SQLException;
 
 public class DatabaseView {
     
@@ -98,67 +99,35 @@ public class DatabaseView {
                                   TreeItem<CallTreeData> parentItem, Long maxTime) {
         logger.debug("Loading call tree nodes for comm: {}, thread: {}, parent: {}", 
                     commId, threadId, parentCallPathId);
-        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + databasePath)) {
-            DSLContext queryContext = DSL.using(conn, SQLDialect.SQLITE);
-            
-            // Query for call tree nodes
-            Result<?> nodes = queryContext.fetch(
-                "SELECT call_path_id, name, short_name, COUNT(calls.id), SUM(return_time - call_time), " +
-                "SUM(insn_count), SUM(cyc_count), SUM(branch_count) " +
-                "FROM calls " +
-                "INNER JOIN call_paths ON calls.call_path_id = call_paths.id " +
-                "INNER JOIN symbols ON call_paths.symbol_id = symbols.id " +
-                "INNER JOIN dsos ON symbols.dso_id = dsos.id " +
-                "WHERE parent_call_path_id = ? " +
-                "AND comm_id = ? " +
-                "AND thread_id = ? " +
-                "GROUP BY call_path_id, name, short_name " +
-                "ORDER BY call_time, call_path_id",
-                parentCallPathId, commId, threadId
-            );
-            
-            // Add nodes to the tree
-            for (org.jooq.Record record : nodes) {
-                Long callPathId = record.get(0, Long.class);
-                String name = record.get(1, String.class);
-                String shortName = record.get(2, String.class);
-                Long count = record.get(3, Long.class);
-                Long totalTime = record.get(4, Long.class);
-                Long totalInsnCount = record.get(5, Long.class);
-                Long totalCycCount = record.get(6, Long.class);
-                Long totalBranchCount = record.get(7, Long.class);
-                
-                // Format node text
-                String nodeText = String.format("%s [%d calls, %d ns]", name, count, totalTime);
-                
-                // Create tree item with custom data
-                CallTreeData nodeData = new CallTreeData(nodeText, callPathId, totalTime);
+        try {
+            for (CallTreeData nodeData : databaseLoader.loadCallTreeNodes(databasePath, commId, threadId, parentCallPathId)) {
                 nodeData.setMaxTime(maxTime);
-                
+
                 TreeItem<CallTreeData> item = new TreeItem<>(nodeData);
-                
+
                 // Add a dummy child to show expand arrow (will be replaced when expanded)
                 item.getChildren().add(new TreeItem<>(new CallTreeData("Loading...", 0L, 0L)));
-                
+
                 item.expandedProperty().addListener((observable, oldValue, newValue) -> {
-                    if (newValue && item.getChildren().size() == 1 && 
-                        item.getChildren().get(0).getValue().getLabel().equals("Loading...")) {
+                    if (newValue && item.getChildren().size() == 1 &&
+                            item.getChildren().get(0).getValue().getLabel().equals("Loading...")) {
                         // Clear dummy child
                         item.getChildren().clear();
-                        
+
                         // Load children - pass down the same maxTime
                         loadCallTreeNodes(databasePath, commId, threadId, item.getValue().getCallPathId(), item, maxTime);
-                        
+
                         // If no children were added, add a placeholder
                         if (item.getChildren().isEmpty()) {
                             item.getChildren().add(new TreeItem<>(new CallTreeData("(No calls)", 0L, 0L)));
                         }
                     }
                 });
-                
+
                 parentItem.getChildren().add(item);
             }
-        } catch (Exception e) {
+
+        } catch (SQLException e) {
             logger.error("Error loading call tree nodes: {}", e.getMessage(), e);
             
             // Add error node
