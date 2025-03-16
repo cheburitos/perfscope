@@ -252,13 +252,19 @@ public class App extends Application {
             } else {
                 label.setText(item.getLabel());
                 
-                // Calculate width based on the time ratio
-                double ratio = item.getTimeRatio();
-                // Get the width of the tree cell (approximation)
-                double maxWidth = getTreeView().getWidth() - (getTreeView().getRoot().getChildren().size() > 0 ? 
-                                                             getTreeView().getRoot().getChildren().get(0).getGraphic() != null ? 
-                                                             40 : 20 : 20);
-                timeBar.setWidth(Math.max(5, ratio * maxWidth)); // Minimum width of 5 pixels
+                // Only show time bar if time is greater than zero
+                if (item.getTime() > 0) {
+                    // Calculate width based on the time ratio
+                    double ratio = item.getTimeRatio();
+                    // Get the width of the tree cell (approximation)
+                    double maxWidth = getTreeView().getWidth() - (getTreeView().getRoot().getChildren().size() > 0 ? 
+                                                                 getTreeView().getRoot().getChildren().get(0).getGraphic() != null ? 
+                                                                 40 : 20 : 20);
+                    timeBar.setWidth(Math.max(5, ratio * maxWidth)); // Minimum width of 5 pixels
+                    timeBar.setVisible(true);
+                } else {
+                    timeBar.setVisible(false);
+                }
                 
                 setGraphic(stack);
             }
