@@ -1,0 +1,82 @@
+/* Main application styles */
+.root {
+    -fx-font-family: 'Segoe UI', Arial, sans-serif;
+    -fx-font-size: 12px;
+    -fx-background-color: #f5f5f5;
+}
+
+/* Menu styling */
+.menu-bar {
+    -fx-background-color: #2c3e50;
+}
+
+.menu-bar .label {
+    -fx-text-fill: white;
+}
+
+.menu-item .label {
+    -fx-text-fill: black;
+}
+
+/* Tab styling */
+.tab-pane .tab-header-area .tab-header-background {
+    -fx-background-color: #ecf0f1;
+}
+
+.tab-pane .tab {
+    -fx-background-color: #bdc3c7;
+}
+
+.tab-pane .tab:selected {
+    -fx-background-color: white;
+}
+
+.tab .tab-label {
+    -fx-text-fill: #2c3e50;
+    -fx-font-weight: bold;
+}
+
+/* Tree view styling */
+.tree-view {
+    -fx-background-color: white;
+    -fx-border-color: #ddd;
+    -fx-border-width: 1px;
+}
+
+.tree-cell {
+    -fx-padding: 5px;
+}
+
+.tree-cell:selected {
+    -fx-background-color: #3498db;
+}
+
+.tree-cell:selected .label {
+    -fx-text-fill: white;
+}
+
+/* List view styling */
+.list-view {
+    -fx-background-color: white;
+    -fx-border-color: #ddd;
+    -fx-border-width: 1px;
+}
+
+.list-cell {
+    -fx-padding: 5px;
+}
+
+.list-cell:selected {
+    -fx-background-color: #3498db;
+}
+
+.list-cell:selected .label {
+    -fx-text-fill: white;
+}
+
+/* Status bar */
+#status-bar {
+    -fx-background-color: #ecf0f1;
+    -fx-border-color: #bdc3c7;
+    -fx-border-width: 1px 0 0 0;
+} 
