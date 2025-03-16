@@ -1,7 +1,6 @@
 plugins {
     id 'java'
     id 'application'
-    id 'io.freefair.lombok' version '8.12.1'
     id 'org.openjfx.javafxplugin' version '0.0.14'
     id 'nu.studer.jooq' version '9.0'
 }
@@ -75,9 +74,6 @@ dependencies {
 
     implementation group: 'org.rocksdb', name: 'rocksdbjni', version: '9.7.3'
 
-    compileOnly group: 'org.projectlombok', name: 'lombok', version: '1.18.28'
-    annotationProcessor group: 'org.projectlombok', name: 'lombok', version: '1.18.28'
-
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
 
@@ -94,11 +90,7 @@ test {
 
 def openjfxVersion = "17.0.1"
 
-def javafxModules = [
-        'javafx.controls',
-        'javafx.fxml',
-        'javafx.swing'
-]
+def javafxModules = ['javafx.controls']
 
 String jarPlatform = project.findProperty("platform")
 

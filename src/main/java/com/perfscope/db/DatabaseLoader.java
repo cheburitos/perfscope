@@ -24,7 +24,8 @@ import java.util.List;
 public class DatabaseLoader {
     
     private static final Logger logger = LoggerFactory.getLogger(DatabaseLoader.class);
-    
+    private static final long ROOT_PARENT_CALL_PATH_ID = 1L;
+
     public List<CommData> loadCommsWithCalls(String databasePath) throws SQLException {
         logger.info("Loading comms with calls from: {}", databasePath);
         List<CommData> result = new ArrayList<>();
@@ -60,17 +61,17 @@ public class DatabaseLoader {
             DSLContext queryContext = DSL.using(conn, SQLDialect.SQLITE);
 
             Result<?> nodes = queryContext.fetch(
-                "SELECT SUM(return_time - call_time) " +
-                "FROM calls " +
-                "INNER JOIN call_paths ON calls.call_path_id = call_paths.id " +
-                "INNER JOIN symbols ON call_paths.symbol_id = symbols.id " +
-                "INNER JOIN dsos ON symbols.dso_id = dsos.id " +
-                "WHERE parent_call_path_id = ? " +
-                "AND comm_id = ? " +
-                "AND thread_id = ? " +
-                "GROUP BY call_path_id, name, short_name " +
-                "ORDER BY call_time, call_path_id",
-                1L, commId, threadId
+                    "SELECT SUM(return_time - call_time) " +
+                    "FROM calls " +
+                    "INNER JOIN call_paths ON calls.call_path_id = call_paths.id " +
+                    "INNER JOIN symbols ON call_paths.symbol_id = symbols.id " +
+                    "INNER JOIN dsos ON symbols.dso_id = dsos.id " +
+                    "WHERE parent_call_path_id = ? " +
+                    "AND comm_id = ? " +
+                    "AND thread_id = ? " +
+                    "GROUP BY call_path_id, name, short_name " +
+                    "ORDER BY call_time, call_path_id",
+                    ROOT_PARENT_CALL_PATH_ID, commId, threadId
             );
             
             Long maxTime = 0L;
