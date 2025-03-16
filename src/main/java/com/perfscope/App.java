@@ -20,7 +20,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 import com.perfscope.ui.DatabaseView;
-import com.perfscope.model.DatabaseLoader;
+import com.perfscope.db.DatabaseLoader;
 import com.perfscope.model.CommData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

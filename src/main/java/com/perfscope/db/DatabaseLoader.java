@@ -1,5 +1,7 @@
-package com.perfscope.model;
+package com.perfscope.db;
 
+import com.perfscope.model.CallTreeData;
+import com.perfscope.model.CommData;
 import com.perfscope.model.tables.Comms;
 import com.perfscope.model.tables.CommThreads;
 import com.perfscope.model.tables.Threads;

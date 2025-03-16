@@ -2,7 +2,7 @@ package com.perfscope.ui;
 
 import com.perfscope.model.CallTreeData;
 import com.perfscope.model.CommData;
-import com.perfscope.model.DatabaseLoader;
+import com.perfscope.db.DatabaseLoader;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
