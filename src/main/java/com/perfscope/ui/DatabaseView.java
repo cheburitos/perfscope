@@ -172,7 +172,7 @@ public class DatabaseView {
                     double maxWidth = getTreeView().getWidth() - (getTreeView().getRoot().getChildren().size() > 0 ? 
                                                                  getTreeView().getRoot().getChildren().get(0).getGraphic() != null ? 
                                                                  40 : 20 : 20);
-                    timeBar.setWidth(Math.max(5, ratio * maxWidth)); // Minimum width of 5 pixels
+                    timeBar.setWidth(Math.max(1, ratio * maxWidth));
                     timeBar.setVisible(true);
                 } else {
                     timeBar.setVisible(false);
