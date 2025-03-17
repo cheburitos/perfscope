@@ -107,8 +107,7 @@ public class DatabaseLoader {
                                 Long totalCycCount = record.get(6, Long.class);
                                 Long totalBranchCount = record.get(7, Long.class);
 
-                                String nodeText = String.format("%s [%d calls, %d ns]", name, count, totalTime);
-                                return new CallTreeData(nodeText, callPathId, totalTime);
+                                return new CallTreeData(name, count, totalTime, callPathId, totalTime);
                             }
                     );
         }

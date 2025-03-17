@@ -4,6 +4,7 @@ import com.perfscope.model.CallTreeData;
 import com.perfscope.model.CommData;
 import com.perfscope.db.DatabaseLoader;
 
+import com.perfscope.util.Duration;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -38,7 +39,7 @@ public class DatabaseView {
         
         // Create a placeholder for the main content
         TreeView<CallTreeData> callTreeView = new TreeView<>();
-        callTreeView.setRoot(new TreeItem<>(new CallTreeData("Call Tree", 0L, 0L)));
+        callTreeView.setRoot(new TreeItem<>(new CallTreeData("Call Tree", null, null, 0L, 0L)));
         callTreeView.setShowRoot(false);
         
         // Set up custom cell factory for the TreeView
@@ -54,7 +55,7 @@ public class DatabaseView {
                     Long threadId = selectedThread.value1();
                     
                     // Clear previous tree
-                    callTreeView.setRoot(new TreeItem<>(new CallTreeData("Call Tree", 0L, 0L)));
+                    callTreeView.setRoot(new TreeItem<>(new CallTreeData("Call Tree", null, null, 0L, 0L)));
                     callTreeView.setShowRoot(false);
                     
                     // First, calculate the maximum time across all nodes
@@ -102,11 +103,11 @@ public class DatabaseView {
                 TreeItem<CallTreeData> item = new TreeItem<>(nodeData);
                 
                 // Add a dummy child to show expand arrow (will be replaced when expanded)
-                item.getChildren().add(new TreeItem<>(new CallTreeData("Loading...", 0L, 0L)));
+                item.getChildren().add(new TreeItem<>(new CallTreeData("Loading...", null, null, 0L, 0L)));
                 
                 item.expandedProperty().addListener((observable, oldValue, newValue) -> {
                     if (newValue && item.getChildren().size() == 1 && 
-                        item.getChildren().get(0).getValue().getLabel().equals("Loading...")) {
+                        item.getChildren().get(0).getValue().getName().equals("Loading...")) {
                         // Clear dummy child
                         item.getChildren().clear();
                         
@@ -115,7 +116,15 @@ public class DatabaseView {
                         
                         // If no children were added, add a placeholder
                         if (item.getChildren().isEmpty()) {
-                            item.getChildren().add(new TreeItem<>(new CallTreeData("(No calls)", 0L, 0L)));
+                            item.getChildren().add(new TreeItem<>(
+                                    new CallTreeData(
+                                            "(No calls)",
+                                            null,
+                                            null,
+                                            0L,
+                                            0L)
+                                    )
+                            );
                         }
                     }
                 });
@@ -126,7 +135,15 @@ public class DatabaseView {
             logger.error("Error loading call tree nodes: {}", e.getMessage(), e);
             
             // Add error node
-            parentItem.getChildren().add(new TreeItem<>(new CallTreeData("Error loading data: " + e.getMessage(), 0L, 0L)));
+            parentItem.getChildren().add(new TreeItem<>(
+                    new CallTreeData(
+                            "Error loading data: " + e.getMessage(),
+                            null,
+                            null,
+                            0L,
+                            0L)
+                    )
+            );
         }
     }
     
@@ -162,10 +179,17 @@ public class DatabaseView {
                 setText(null);
                 setGraphic(null);
             } else {
-                label.setText(item.getLabel());
+                String labelText;
+                if (item.getCount() != null && item.getTotalTime() != null) {
+                    labelText = String.format("%s [%d calls, %s]", item.getName(), item.getCount(), Duration.ofNanos(item.getTotalTime()));
+                } else {
+                    labelText = item.getName();
+                }
+
+                label.setText(labelText);
                 
                 // Only show time bar if time is greater than zero
-                if (item.getTime() > 0) {
+                if (item.getTimeNanos() > 0) {
                     // Calculate width based on the time ratio
                     double ratio = item.getTimeRatio();
                     // Get the width of the tree cell (approximation)

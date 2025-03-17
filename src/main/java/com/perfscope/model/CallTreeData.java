@@ -1,27 +1,39 @@
 package com.perfscope.model;
 
 public class CallTreeData {
-    private final String label;
+    private final String name;
+    private final Long count;
+    private final Long totalTime;
     private final Long callPathId;
-    private final Long time;
+    private final Long timeNanos;
     private Long maxTime = 1L;
     
-    public CallTreeData(String label, Long callPathId, Long time) {
-        this.label = label;
+    public CallTreeData(String name, Long count, Long totalTime, Long callPathId, Long timeNanos) {
+        this.name = name;
+        this.count = count;
+        this.totalTime = totalTime;
         this.callPathId = callPathId;
-        this.time = time;
+        this.timeNanos = timeNanos;
     }
-    
-    public String getLabel() {
-        return label;
+
+    public String getName() {
+        return name;
     }
-    
+
+    public Long getCount() {
+        return count;
+    }
+
+    public Long getTotalTime() {
+        return totalTime;
+    }
+
     public Long getCallPathId() {
         return callPathId;
     }
     
-    public Long getTime() {
-        return time;
+    public Long getTimeNanos() {
+        return timeNanos;
     }
     
     public void setMaxTime(Long maxTime) {
@@ -29,11 +41,6 @@ public class CallTreeData {
     }
     
     public double getTimeRatio() {
-        return (double) time / maxTime;
-    }
-    
-    @Override
-    public String toString() {
-        return label;
+        return (double) timeNanos / maxTime;
     }
 } 
