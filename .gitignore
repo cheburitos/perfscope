@@ -3,3 +3,4 @@
 /.idea/
 /.gradle/
 /logs
+/src/main/java/com/perfscope/TestJooq.java
