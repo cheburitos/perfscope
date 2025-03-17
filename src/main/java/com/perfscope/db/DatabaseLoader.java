@@ -11,13 +11,10 @@ import com.perfscope.model.tables.records.CommsRecord;
 import org.jooq.DSLContext;
 import org.jooq.Record3;
 import org.jooq.Result;
-import org.jooq.SQLDialect;
 import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,8 +28,8 @@ public class DatabaseLoader {
         logger.info("Loading comms with calls from: {}", databasePath);
         List<CommData> result = new ArrayList<>();
         
-        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + databasePath)) {
-            DSLContext context = DSL.using(conn, SQLDialect.SQLITE);
+        try (DatabaseConnectionHolder dbConnection = new DatabaseConnectionHolder(databasePath)) {
+            DSLContext context = dbConnection.getContext();
             
             List<CommsRecord> commsWithCalls = context
                 .selectFrom(Comms.COMMS)
@@ -58,8 +55,8 @@ public class DatabaseLoader {
     
     public Long calculateMaxTime(String databasePath, Long commId, Long threadId) {
         logger.debug("Calculating max time for comm: {}, thread: {}", commId, threadId);
-        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + databasePath)) {
-            DSLContext queryContext = DSL.using(conn, SQLDialect.SQLITE);
+        try (DatabaseConnectionHolder dbConnection = new DatabaseConnectionHolder(databasePath)) {
+            DSLContext queryContext = dbConnection.getContext();
 
             Result<?> nodes = queryContext
                 .select(DSL.sum(Calls.CALLS.RETURN_TIME.minus(Calls.CALLS.CALL_TIME)))
@@ -84,8 +81,8 @@ public class DatabaseLoader {
     public List<CallTreeData> loadCallTreeNodes(String databasePath, Long commId, Long threadId, Long parentCallPathId) throws SQLException {
         logger.debug("Loading call tree nodes for comm: {}, thread: {}, parent: {}", commId, threadId, parentCallPathId);
 
-        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + databasePath)) {
-            DSLContext queryContext = DSL.using(conn, SQLDialect.SQLITE);
+        try (DatabaseConnectionHolder dbConnection = new DatabaseConnectionHolder(databasePath)) {
+            DSLContext queryContext = dbConnection.getContext();
 
             return queryContext.fetch(
                     "SELECT call_path_id, name, short_name, COUNT(calls.id), SUM(return_time - call_time), " +
