@@ -3,6 +3,7 @@ package com.perfscope.db;
 import com.perfscope.model.CallTreeData;
 import com.perfscope.model.CommData;
 import com.perfscope.model.tables.Comms;
+import com.perfscope.model.tables.Calls;
 import com.perfscope.model.tables.CommThreads;
 import com.perfscope.model.tables.Threads;
 import com.perfscope.model.tables.records.CommsRecord;
@@ -60,19 +61,14 @@ public class DatabaseLoader {
         try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + databasePath)) {
             DSLContext queryContext = DSL.using(conn, SQLDialect.SQLITE);
 
-            Result<?> nodes = queryContext.fetch(
-                    "SELECT SUM(return_time - call_time) " +
-                    "FROM calls " +
-                    "INNER JOIN call_paths ON calls.call_path_id = call_paths.id " +
-                    "INNER JOIN symbols ON call_paths.symbol_id = symbols.id " +
-                    "INNER JOIN dsos ON symbols.dso_id = dsos.id " +
-                    "WHERE parent_call_path_id = ? " +
-                    "AND comm_id = ? " +
-                    "AND thread_id = ? " +
-                    "GROUP BY call_path_id, name, short_name " +
-                    "ORDER BY call_time, call_path_id",
-                    ROOT_PARENT_CALL_PATH_ID, commId, threadId
-            );
+            Result<?> nodes = queryContext
+                .select(DSL.sum(Calls.CALLS.RETURN_TIME.minus(Calls.CALLS.CALL_TIME)))
+                .from(Calls.CALLS)
+                .where(Calls.CALLS.PARENT_CALL_PATH_ID.eq(ROOT_PARENT_CALL_PATH_ID))
+                .and(Calls.CALLS.COMM_ID.eq(commId))
+                .and(Calls.CALLS.THREAD_ID.eq(threadId))
+                .groupBy(Calls.CALLS.CALL_PATH_ID)
+                .fetch();
             
             Long maxTime = 0L;
             for (org.jooq.Record record : nodes) {
