@@ -53,8 +53,8 @@ public class DatabaseLoader {
         return result;
     }
     
-    public Long calculateMaxTime(String databasePath, Long commId, Long threadId) {
-        logger.debug("Calculating max time for comm: {}, thread: {}", commId, threadId);
+    public Long calculateTotalTimeNanos(String databasePath, Long commId, Long threadId) {
+        logger.debug("Calculating total time for comm: {}, thread: {}", commId, threadId);
         try (DatabaseConnectionHolder dbConnection = new DatabaseConnectionHolder(databasePath)) {
             DSLContext queryContext = dbConnection.getContext();
 
@@ -67,13 +67,13 @@ public class DatabaseLoader {
                 .groupBy(Calls.CALLS.CALL_PATH_ID)
                 .fetch();
             
-            Long maxTime = 0L;
+            Long totalTimeNanos = 0L;
             for (org.jooq.Record record : nodes) {
-                maxTime += record.get(0, Long.class);
+                totalTimeNanos += record.get(0, Long.class);
             }
-            return maxTime != 0L ? maxTime: 1L; // Avoid division by zero
+            return totalTimeNanos != 0L ? totalTimeNanos: 1L; // Avoid division by zero
         } catch (Exception e) {
-            logger.error("Error calculating max time: {}", e.getMessage(), e);
+            logger.error("Error calculating total time: {}", e.getMessage(), e);
             return 1L;
         }
     }

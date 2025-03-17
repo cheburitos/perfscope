@@ -6,7 +6,7 @@ public class CallTreeData {
     private final Long totalTime;
     private final Long callPathId;
     private final Long timeNanos;
-    private Long maxTime = 1L;
+    private Long totalTimeNanos = 1L;
     
     public CallTreeData(String name, Long count, Long totalTime, Long callPathId, Long timeNanos) {
         this.name = name;
@@ -36,11 +36,11 @@ public class CallTreeData {
         return timeNanos;
     }
     
-    public void setMaxTime(Long maxTime) {
-        this.maxTime = maxTime;
+    public void setTotalTimeNanos(Long totalTimeNanos) {
+        this.totalTimeNanos = totalTimeNanos;
     }
     
     public double getTimeRatio() {
-        return (double) timeNanos / maxTime;
+        return (double) timeNanos / totalTimeNanos;
     }
 } 

@@ -1,8 +1,8 @@
-(Work in progress, POC) A simple viewer for raw ptrace data stored in SQLite database.
+(Work in progress, POC) A simple viewer for raw Intel PTrace data stored in SQLite database.
 
 ### How to use
 
-Only Linux and Intel CPU is supported. Record you program:
+Only Linux and Intel CPU are supported. Record you program:
 
     sudo perf record --kcore -e intel_pt/cyc/ ./lsm-tree
 
@@ -16,7 +16,6 @@ Open database in perfscope:
 
 Perfscope is similar (and can be considered as fork of) to the script [exported-sql-viewer.py](https://github.com/torvalds/linux/blob/master/tools/perf/scripts/python/exported-sql-viewer.py) which
 supports building call tree. Implementing additional staff is in progress.
-
 
 ### Build
 

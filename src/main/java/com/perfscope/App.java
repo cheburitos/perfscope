@@ -28,8 +28,8 @@ import org.slf4j.LoggerFactory;
 public class App extends Application {
 
     private static final Logger logger = LoggerFactory.getLogger(App.class);
-
     public static Stage stage;
+
     private String currentDatabasePath = "examples/pt_example"; // Default database path
     private DatabaseLoader databaseLoader;
     private DatabaseView databaseView;

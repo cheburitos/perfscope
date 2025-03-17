@@ -24,8 +24,9 @@ import java.util.List;
 public class DatabaseView {
     
     private static final Logger logger = LoggerFactory.getLogger(DatabaseView.class);
+    private static final String DUMMY_LOADING_NODE_NAME = "Loading...";
     
-    private DatabaseLoader databaseLoader = new DatabaseLoader();
+    private final DatabaseLoader databaseLoader = new DatabaseLoader();
     
     public BorderPane createCommView(String databasePath, CommData commData) {
         BorderPane tabContent = new BorderPane();
@@ -33,8 +34,7 @@ public class DatabaseView {
         ListView<String> threadListView = new ListView<>();
         
         for (Record3<Long, Integer, Integer> thread : commData.getThreads()) {
-            threadListView.getItems().add(String.format("PID: %d, TID: %d", 
-                thread.value2(), thread.value3()));
+            threadListView.getItems().add(String.format("PID: %d, TID: %d", thread.value2(), thread.value3()));
         }
         
         // Create a placeholder for the main content
@@ -48,21 +48,16 @@ public class DatabaseView {
         // Set up thread selection listener
         threadListView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
-                // Get the selected thread ID
                 int selectedIndex = threadListView.getSelectionModel().getSelectedIndex();
                 if (selectedIndex >= 0 && selectedIndex < commData.getThreads().size()) {
                     Record3<Long, Integer, Integer> selectedThread = commData.getThreads().get(selectedIndex);
                     Long threadId = selectedThread.value1();
-                    
-                    // Clear previous tree
+
                     callTreeView.setRoot(new TreeItem<>(new CallTreeData("Call Tree", null, null, 0L, 0L)));
                     callTreeView.setShowRoot(false);
-                    
-                    // First, calculate the maximum time across all nodes
-                    Long maxTime = databaseLoader.calculateMaxTime(databasePath, commData.getComm().getId().longValue(), threadId);
-                    
-                    // Load root nodes (parent_call_path_id = 1) with the max time
-                    loadCallTreeNodes(databasePath, commData.getComm().getId().longValue(), threadId, 1L, callTreeView.getRoot(), maxTime);
+
+                    Long totalTimeNanos = databaseLoader.calculateTotalTimeNanos(databasePath, commData.getComm().getId().longValue(), threadId);
+                    loadCallTreeNodes(databasePath, commData.getComm().getId().longValue(), threadId, 1L, callTreeView.getRoot(), totalTimeNanos);
                 }
             }
         });
@@ -75,44 +70,38 @@ public class DatabaseView {
         threadBox.getChildren().addAll(threadsLabel, threadListView);
         VBox.setVgrow(threadListView, Priority.ALWAYS);
         
-        // Add the thread list and call tree to the SplitPane
         splitPane.getItems().addAll(threadBox, callTreeView);
-        
-        // Set the default divider position to 20%
         splitPane.setDividerPositions(0.2);
-        
-        // Set minimum width for the thread list
+
         threadBox.setMinWidth(100);
         threadBox.setMaxWidth(300);
-        
-        // Set the SplitPane as the tab content
+
         tabContent.setCenter(splitPane);
         
         return tabContent;
     }
     
     private void loadCallTreeNodes(String databasePath, Long commId, Long threadId, Long parentCallPathId, 
-                                  TreeItem<CallTreeData> parentItem, Long maxTime) {
+                                  TreeItem<CallTreeData> parentItem, Long totalTimeNanos) {
         try {
             List<CallTreeData> nodes = databaseLoader.loadCallTreeNodes(databasePath, commId, threadId, parentCallPathId);
             
             for (CallTreeData nodeData : nodes) {
                 // Set the max time for proper scaling
-                nodeData.setMaxTime(maxTime);
+                nodeData.setTotalTimeNanos(totalTimeNanos);
                 
                 TreeItem<CallTreeData> item = new TreeItem<>(nodeData);
                 
                 // Add a dummy child to show expand arrow (will be replaced when expanded)
-                item.getChildren().add(new TreeItem<>(new CallTreeData("Loading...", null, null, 0L, 0L)));
+                item.getChildren().add(new TreeItem<>(new CallTreeData(DUMMY_LOADING_NODE_NAME, null, null, 0L, 0L)));
                 
                 item.expandedProperty().addListener((observable, oldValue, newValue) -> {
                     if (newValue && item.getChildren().size() == 1 && 
-                        item.getChildren().get(0).getValue().getName().equals("Loading...")) {
-                        // Clear dummy child
+                        item.getChildren().get(0).getValue().getName().equals(DUMMY_LOADING_NODE_NAME)) {
+
                         item.getChildren().clear();
-                        
-                        // Load children - pass down the same maxTime
-                        loadCallTreeNodes(databasePath, commId, threadId, item.getValue().getCallPathId(), item, maxTime);
+
+                        loadCallTreeNodes(databasePath, commId, threadId, item.getValue().getCallPathId(), item, totalTimeNanos);
                         
                         // If no children were added, add a placeholder
                         if (item.getChildren().isEmpty()) {
