@@ -48,7 +48,6 @@ public class App extends Application {
         databaseLoader = new DatabaseLoader();
         databaseView = new DatabaseView();
         
-        // Apply modern styling
         Scene scene = new Scene(createRootPane(), 1000, 700);
         scene.getStylesheets().add(getClass().getResource("/styles.css").toExternalForm());
         
@@ -59,7 +58,6 @@ public class App extends Application {
     private BorderPane createRootPane() {
         BorderPane root = new BorderPane();
         
-        // Create menu bar with icons
         MenuBar menuBar = new MenuBar();
         Menu fileMenu = new Menu("File");
         MenuItem openMenuItem = new MenuItem("Open Database...");

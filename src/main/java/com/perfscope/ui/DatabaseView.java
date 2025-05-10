@@ -23,10 +23,8 @@ public class DatabaseView {
             threadListView.getItems().add(String.format("PID: %d, TID: %d", thread.value2(), thread.value3()));
         }
         
-        // Create a CallTreeView instance
         CallTreeView callTreeView = new CallTreeView();
         
-        // Set up thread selection listener
         threadListView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
                 int selectedIndex = threadListView.getSelectionModel().getSelectedIndex();

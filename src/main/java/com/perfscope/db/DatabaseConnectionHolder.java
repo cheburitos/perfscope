@@ -22,8 +22,7 @@ public class DatabaseConnectionHolder implements AutoCloseable {
     public DatabaseConnectionHolder(String databasePath) throws SQLException {
         logger.debug("Opening database connection to: {}", databasePath);
         this.connection = DriverManager.getConnection("jdbc:sqlite:" + databasePath);
-        
-        // Create a configuration with the SQL query logging listener
+
         DefaultConfiguration configuration = new DefaultConfiguration();
         configuration.set(connection);
         configuration.set(SQLDialect.SQLITE);
@@ -42,10 +41,7 @@ public class DatabaseConnectionHolder implements AutoCloseable {
             connection.close();
         }
     }
-    
-    /**
-     * Custom execution listener that logs SQL queries and their execution times
-     */
+
     private static class SqlQueryLoggingListener implements ExecuteListener {
         private long startTime;
         
@@ -70,7 +66,6 @@ public class DatabaseConnectionHolder implements AutoCloseable {
             logger.error("SQL error: {}", ctx.exception().getMessage(), ctx.exception());
         }
 
-        // Required empty implementations for other ExecuteListener methods
         @Override public void start(ExecuteContext ctx) {}
         @Override public void renderStart(ExecuteContext ctx) {}
         @Override public void renderEnd(ExecuteContext ctx) {}
