@@ -30,18 +30,13 @@ public class CallTreeView extends TreeView<CallTreeData> {
     private final DatabaseLoader databaseLoader = new DatabaseLoader();
     
     public CallTreeView() {
-        setRoot(new TreeItem<>(new CallTreeData("Call Tree", null, null, 0L, 0L)));
+        setRoot(new TreeItem<>(CallTreeData.stub("Call Tree")));
         setShowRoot(false);
-        
-        // Set up custom cell factory for the TreeView
         setCellFactory(tv -> new CallTreeCell());
-        
-        // Add key event handler for clipboard operations
         setOnKeyPressed(this::handleKeyPress);
     }
     
     private void handleKeyPress(KeyEvent event) {
-        // Check for Ctrl+C key combination
         if (event.isControlDown() && event.getCode() == KeyCode.C) {
             copySelectedNodeToClipboard();
             event.consume();
@@ -54,10 +49,9 @@ public class CallTreeView extends TreeView<CallTreeData> {
             CallTreeData data = selectedItem.getValue();
             String textToCopy;
             
-            if (data.getCount() != null && data.getTotalTime() != null) {
-                textToCopy = String.format("%s [%d calls, %s]", 
+            if (data.getTotalTime() != null) {
+                textToCopy = String.format("%s [%s]", 
                     data.getName(), 
-                    data.getCount(), 
                     Duration.ofNanos(data.getTotalTime()));
             } else {
                 textToCopy = data.getName();
@@ -73,7 +67,7 @@ public class CallTreeView extends TreeView<CallTreeData> {
     }
     
     public void loadThreadData(String databasePath, Long commId, Long threadId) {
-        setRoot(new TreeItem<>(new CallTreeData("Call Tree", null, null, 0L, 0L)));
+        setRoot(new TreeItem<>(CallTreeData.stub("Call Tree")));
         setShowRoot(false);
 
         Long totalTimeNanos = databaseLoader.calculateTotalTimeNanos(databasePath, commId, threadId);
@@ -83,36 +77,33 @@ public class CallTreeView extends TreeView<CallTreeData> {
     private void loadCallTreeNodes(String databasePath, Long commId, Long threadId, Long parentCallPathId, 
                                   TreeItem<CallTreeData> parentItem, Long totalTimeNanos) {
         try {
-            List<CallTreeData> nodes = databaseLoader.loadCallTreeNodes(databasePath, commId, threadId, parentCallPathId);
+            CallTreeData callTreeData = parentItem.getValue();
+            List<CallTreeData> nodes = databaseLoader.loadCallTreeNodes(
+                databasePath, 
+                commId, 
+                threadId, 
+                parentCallPathId, 
+                callTreeData.getCallTime(), 
+                callTreeData.getReturnTime()
+            );
             
             for (CallTreeData nodeData : nodes) {
-                // Set the max time for proper scaling
                 nodeData.setTotalTimeNanos(totalTimeNanos);
                 
                 TreeItem<CallTreeData> item = new TreeItem<>(nodeData);
                 
                 // Add a dummy child to show expand arrow (will be replaced when expanded)
-                item.getChildren().add(new TreeItem<>(new CallTreeData(DUMMY_LOADING_NODE_NAME, null, null, 0L, 0L)));
+                item.getChildren().add(new TreeItem<>(CallTreeData.stub(DUMMY_LOADING_NODE_NAME)));
                 
                 item.expandedProperty().addListener((observable, oldValue, newValue) -> {
                     if (newValue && item.getChildren().size() == 1 && 
                         item.getChildren().get(0).getValue().getName().equals(DUMMY_LOADING_NODE_NAME)) {
-
                         item.getChildren().clear();
 
                         loadCallTreeNodes(databasePath, commId, threadId, item.getValue().getCallPathId(), item, totalTimeNanos);
                         
-                        // If no children were added, add a placeholder
                         if (item.getChildren().isEmpty()) {
-                            item.getChildren().add(new TreeItem<>(
-                                    new CallTreeData(
-                                            "(No calls)",
-                                            null,
-                                            null,
-                                            0L,
-                                            0L)
-                                    )
-                            );
+                            item.getChildren().add(new TreeItem<>(CallTreeData.stub("(No calls)")));
                         }
                     }
                 });
@@ -122,40 +113,28 @@ public class CallTreeView extends TreeView<CallTreeData> {
         } catch (SQLException e) {
             logger.error("Error loading call tree nodes: {}", e.getMessage(), e);
             
-            // Add error node
-            parentItem.getChildren().add(new TreeItem<>(
-                    new CallTreeData(
-                            "Error loading data: " + e.getMessage(),
-                            null,
-                            null,
-                            0L,
-                            0L)
-                    )
-            );
+            parentItem.getChildren().add(new TreeItem<>(CallTreeData.stub("Error loading data: " + e.getMessage())));
         }
     }
     
-    // Custom cell implementation for the call tree
     private static class CallTreeCell extends TreeCell<CallTreeData> {
         private final StackPane stack = new StackPane();
         private final Rectangle timeBar = new Rectangle();
         private final Label label = new Label();
         
         public CallTreeCell() {
-            timeBar.setHeight(20); // Fixed height for the bar
-            timeBar.setFill(Color.web("#4285F4", 0.3)); // Google blue with transparency
-            timeBar.setArcWidth(5); // Rounded corners
+            timeBar.setHeight(20);
+            timeBar.setFill(Color.web("#4285F4", 0.3));
+            timeBar.setArcWidth(5);
             timeBar.setArcHeight(5);
             
             stack.getChildren().addAll(timeBar, label);
             stack.setAlignment(Pos.CENTER_LEFT);
             stack.setPadding(new Insets(2, 5, 2, 0));
             
-            // Make sure the bar is behind the text
             StackPane.setAlignment(timeBar, Pos.CENTER_LEFT);
-            timeBar.setTranslateX(0); // Start from the left edge
+            timeBar.setTranslateX(0);
             
-            // Add some styling to the label
             label.setStyle("-fx-font-weight: normal;");
         }
         
@@ -168,19 +147,16 @@ public class CallTreeView extends TreeView<CallTreeData> {
                 setGraphic(null);
             } else {
                 String labelText;
-                if (item.getCount() != null && item.getTotalTime() != null) {
-                    labelText = String.format("%s [%d calls, %s]", item.getName(), item.getCount(), Duration.ofNanos(item.getTotalTime()));
+                if (item.getTotalTime() != null) {
+                    labelText = String.format("%s [%s]", item.getName(), Duration.ofNanos(item.getTotalTime()));
                 } else {
                     labelText = item.getName();
                 }
 
                 label.setText(labelText);
                 
-                // Only show time bar if time is greater than zero
-                if (item.getTimeNanos() > 0) {
-                    // Calculate width based on the time ratio
+                if (item.getTimeNanos() != null && item.getTimeNanos() > 0) {
                     double ratio = item.getTimeRatio();
-                    // Get the width of the tree cell (approximation)
                     double maxWidth = getTreeView().getWidth() - (getTreeView().getRoot().getChildren().size() > 0 ? 
                                                                  getTreeView().getRoot().getChildren().get(0).getGraphic() != null ? 
                                                                  40 : 20 : 20);

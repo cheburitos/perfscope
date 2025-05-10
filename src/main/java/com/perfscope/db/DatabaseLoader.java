@@ -71,22 +71,31 @@ public class DatabaseLoader {
             for (org.jooq.Record record : nodes) {
                 totalTimeNanos += record.get(0, Long.class);
             }
-            return totalTimeNanos != 0L ? totalTimeNanos: 1L; // Avoid division by zero
+            return totalTimeNanos != 0L ? totalTimeNanos: 1L;
         } catch (Exception e) {
             logger.error("Error calculating total time: {}", e.getMessage(), e);
             return 1L;
         }
     }
 
-    public List<CallTreeData> loadCallTreeNodes(String databasePath, Long commId, Long threadId, Long parentCallPathId) throws SQLException {
+    public List<CallTreeData> loadCallTreeNodes(
+        String databasePath,
+        Long commId,
+        Long threadId,
+        Long parentCallPathId,
+        Long fromCallTime,
+        Long toReturnTime) throws SQLException 
+    {
         logger.debug("Loading call tree nodes for comm: {}, thread: {}, parent: {}", commId, threadId, parentCallPathId);
 
+        // TODO rewrite this
         try (DatabaseConnectionHolder dbConnection = new DatabaseConnectionHolder(databasePath)) {
             DSLContext queryContext = dbConnection.getContext();
 
-            return queryContext.fetch(
-                    "SELECT call_path_id, name, short_name, COUNT(calls.id), SUM(return_time - call_time), " +
-                            "SUM(insn_count), SUM(cyc_count), SUM(branch_count) " +
+            if (fromCallTime != null) {
+                return queryContext.fetch(
+                    "SELECT call_path_id, name, short_name, return_time - call_time, " +
+                            "insn_count, cyc_count, branch_count, call_time, return_time " +
                             "FROM calls " +
                             "INNER JOIN call_paths ON calls.call_path_id = call_paths.id " +
                             "INNER JOIN symbols ON call_paths.symbol_id = symbols.id " +
@@ -94,22 +103,52 @@ public class DatabaseLoader {
                             "WHERE parent_call_path_id = ? " +
                             "AND comm_id = ? " +
                             "AND thread_id = ? " +
-                            "GROUP BY call_path_id, name, short_name " +
+                            "AND call_time >= ? " +
+                            "AND return_time <= ? " +
+                            "ORDER BY call_time, call_path_id",
+                    parentCallPathId, commId, threadId, fromCallTime, toReturnTime).map(
+                            record -> {
+                                Long callPathId = record.get(0, Long.class);
+                                String name = record.get(1, String.class);
+                                String shortName = record.get(2, String.class);
+                                Long totalTime = record.get(3, Long.class);
+                                Long totalInsnCount = record.get(4, Long.class);
+                                Long totalCycCount = record.get(5, Long.class);
+                                Long totalBranchCount = record.get(6, Long.class);
+                                Long callTime = record.get(7, Long.class);
+                                Long returnTime = record.get(8, Long.class);
+
+                                return new CallTreeData(name, totalTime, callPathId, totalTime, callTime, returnTime);
+                            }
+                    );
+            } else {
+                return queryContext.fetch(
+                    "SELECT call_path_id, name, short_name, return_time - call_time, " +
+                            "insn_count, cyc_count, branch_count, call_time, return_time " +
+                            "FROM calls " +
+                            "INNER JOIN call_paths ON calls.call_path_id = call_paths.id " +
+                            "INNER JOIN symbols ON call_paths.symbol_id = symbols.id " +
+                            "INNER JOIN dsos ON symbols.dso_id = dsos.id " +
+                            "WHERE parent_call_path_id = ? " +
+                            "AND comm_id = ? " +
+                            "AND thread_id = ? " +
                             "ORDER BY call_time, call_path_id",
                     parentCallPathId, commId, threadId).map(
                             record -> {
                                 Long callPathId = record.get(0, Long.class);
                                 String name = record.get(1, String.class);
                                 String shortName = record.get(2, String.class);
-                                Long count = record.get(3, Long.class);
-                                Long totalTime = record.get(4, Long.class);
-                                Long totalInsnCount = record.get(5, Long.class);
-                                Long totalCycCount = record.get(6, Long.class);
-                                Long totalBranchCount = record.get(7, Long.class);
+                                Long totalTime = record.get(3, Long.class);
+                                Long totalInsnCount = record.get(4, Long.class);
+                                Long totalCycCount = record.get(5, Long.class);
+                                Long totalBranchCount = record.get(6, Long.class);
+                                Long callTime = record.get(7, Long.class);
+                                Long returnTime = record.get(8, Long.class);
 
-                                return new CallTreeData(name, count, totalTime, callPathId, totalTime);
+                                return new CallTreeData(name, totalTime, callPathId, totalTime, callTime, returnTime);
                             }
                     );
+            }
         }
     }
 } 
