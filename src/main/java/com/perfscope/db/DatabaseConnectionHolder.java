@@ -65,23 +65,5 @@ public class DatabaseConnectionHolder implements AutoCloseable {
         public void exception(ExecuteContext ctx) {
             logger.error("SQL error: {}", ctx.exception().getMessage(), ctx.exception());
         }
-
-        @Override public void start(ExecuteContext ctx) {}
-        @Override public void renderStart(ExecuteContext ctx) {}
-        @Override public void renderEnd(ExecuteContext ctx) {}
-        @Override public void prepareStart(ExecuteContext ctx) {}
-        @Override public void prepareEnd(ExecuteContext ctx) {}
-        @Override public void bindStart(ExecuteContext ctx) {}
-        @Override public void bindEnd(ExecuteContext ctx) {}
-        @Override public void outStart(ExecuteContext ctx) {}
-        @Override public void outEnd(ExecuteContext ctx) {}
-        @Override public void fetchStart(ExecuteContext ctx) {}
-        @Override public void resultStart(ExecuteContext ctx) {}
-        @Override public void recordStart(ExecuteContext ctx) {}
-        @Override public void recordEnd(ExecuteContext ctx) {}
-        @Override public void resultEnd(ExecuteContext ctx) {}
-        @Override public void fetchEnd(ExecuteContext ctx) {}
-        @Override public void end(ExecuteContext ctx) {}
-        @Override public void warning(ExecuteContext ctx) {}
     }
 } 
