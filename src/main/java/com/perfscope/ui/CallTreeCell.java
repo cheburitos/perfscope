@@ -28,7 +28,7 @@ public class CallTreeCell extends TreeCell<CallTreeData> {
         StackPane.setAlignment(timeBar, Pos.CENTER_LEFT);
         timeBar.setTranslateX(0);
         
-        label.setStyle("-fx-font-weight: normal;");
+        label.setStyle("-fx-font-weight: normal; -fx-font-size: 15px;");
     }
     
     @Override
