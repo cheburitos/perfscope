@@ -14,7 +14,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class DatabaseConnectionHolder implements AutoCloseable {
-    
+
     private static final Logger logger = LoggerFactory.getLogger(DatabaseConnectionHolder.class);
     private final Connection connection;
     private final DSLContext context;

@@ -1,7 +1,7 @@
 package com.perfscope.db;
 
 import com.perfscope.model.CallTreeData;
-import com.perfscope.model.CommData;
+import com.perfscope.model.CommandData;
 import com.perfscope.model.tables.Calls;
 import com.perfscope.model.tables.CommThreads;
 import com.perfscope.model.tables.Comms;
@@ -23,9 +23,9 @@ public class DatabaseLoader {
     private static final Logger logger = LoggerFactory.getLogger(DatabaseLoader.class);
     private static final long ROOT_PARENT_CALL_PATH_ID = 1L;
 
-    public List<CommData> loadCommsWithCalls(String databasePath) throws SQLException {
+    public List<CommandData> loadCommands(String databasePath) throws SQLException {
         logger.info("Loading comms with calls from: {}", databasePath);
-        List<CommData> result = new ArrayList<>();
+        List<CommandData> result = new ArrayList<>();
         
         try (DatabaseConnectionHolder dbConnection = new DatabaseConnectionHolder(databasePath)) {
             DSLContext context = dbConnection.getContext();
@@ -45,7 +45,7 @@ public class DatabaseLoader {
                     .where(CommThreads.COMM_THREADS.COMM_ID.eq(comm.getId().longValue()))
                     .fetch();
                 
-                result.add(new CommData(comm, threads));
+                result.add(new CommandData(comm.getId(), comm.getComm(), threads));
             }
         }
         

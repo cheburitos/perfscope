@@ -3,6 +3,9 @@ plugins {
     id 'application'
     id 'org.openjfx.javafxplugin' version '0.0.14'
     id 'nu.studer.jooq' version '9.0'
+    id 'org.jetbrains.kotlin.jvm' version '1.6.21'
+    id 'org.jetbrains.kotlin.plugin.lombok' version '1.6.21'
+    id 'org.jetbrains.kotlin.plugin.serialization' version '1.6.21'
 }
 
 repositories {
@@ -72,6 +75,8 @@ dependencies {
     implementation 'org.xerial:sqlite-jdbc:3.42.0.0'
     jooqGenerator 'org.xerial:sqlite-jdbc:3.43.0.0'
 
+    implementation group: 'org.jetbrains.kotlinx', name: 'kotlinx-serialization-json', version: '1.4.1'
+
     implementation group: 'org.rocksdb', name: 'rocksdbjni', version: '9.7.3'
 
     testImplementation platform('org.junit:junit-bom:5.10.0')
@@ -89,7 +94,6 @@ test {
 }
 
 def openjfxVersion = "17.0.1"
-
 def javafxModules = ['javafx.controls']
 
 String jarPlatform = project.findProperty("platform")
@@ -115,9 +119,9 @@ dependencies {
 
 sourceSets {
     main.java.srcDirs = [
-            'src/main/java',
-            '../src/main/java',
-            'src/jooq/java'
+            'src/jooq/java',
+            'src/main/kotlin',
+            '../src/main/kotlin'
     ]
 }
 
@@ -134,35 +138,6 @@ task fatJar(type: Jar) {
     }
     filesMatching(['*.dll'], { fileCopyDetails ->
         if (platform != null && platform != "win") {
-            fileCopyDetails.exclude()
-        }
-    })
-    filesMatching(['*.so', '*.jnilib'], { fileCopyDetails ->
-        def fileName = fileCopyDetails.name
-        if (platform != null && fileName.startsWith("librocksdbjni")) {
-            if (fileName.contains("librocksdbjni-linux32") && platform != "linux") {
-                fileCopyDetails.exclude()
-            }
-            if (fileName.contains("librocksdbjni-linux64") && platform != "linux") {
-                fileCopyDetails.exclude()
-            }
-            if (fileName.contains("librocksdbjni-linux-aarch64") && platform != "linux-aarch64") {
-                fileCopyDetails.exclude()
-            }
-            if (fileName.contains("librocksdbjni-osx-x86_64") && platform != "mac") {
-                fileCopyDetails.exclude()
-            }
-            if (fileName.contains("librocksdbjni-osx-arm64") && platform != "mac-aarch64") {
-                fileCopyDetails.exclude()
-            }
-            // unsupported platforms
-            if (fileName.contains("librocksdbjni-linux-s390x") || fileName.contains("librocksdbjni-linux-ppc64le")) {
-                fileCopyDetails.exclude()
-            }
-        }
-    })
-    filesMatching(['librocksdbjni-linux-aarch64.*'], { fileCopyDetails ->
-        if (platform != null && platform != "linux-aarch64") {
             fileCopyDetails.exclude()
         }
     })

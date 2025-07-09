@@ -1,8 +1,8 @@
 package com.perfscope;
 
 import com.perfscope.db.DatabaseLoader;
-import com.perfscope.model.CommData;
-import com.perfscope.ui.DatabaseView;
+import com.perfscope.model.CommandData;
+import com.perfscope.view.DatabaseView;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -30,7 +30,7 @@ public class App extends Application {
     private static final Logger logger = LoggerFactory.getLogger(App.class);
     public static Stage stage;
 
-    private String currentDatabasePath = "examples/pt_example"; // Default database path
+    private String currentDatabasePath = "examples/pt_example";
     private DatabaseLoader databaseLoader;
     private DatabaseView databaseView;
 
@@ -68,8 +68,7 @@ public class App extends Application {
         
         fileMenu.getItems().add(openMenuItem);
         menuBar.getMenus().add(fileMenu);
-        
-        // Add status bar at bottom
+
         HBox statusBar = new HBox();
         statusBar.setId("status-bar");
         statusBar.setPadding(new Insets(5));
@@ -79,8 +78,7 @@ public class App extends Application {
         
         root.setTop(menuBar);
         root.setBottom(statusBar);
-        
-        // Create tab pane for database content
+
         TabPane tabPane = new TabPane();
         tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
         root.setCenter(tabPane);
@@ -100,7 +98,7 @@ public class App extends Application {
             return null;
         }
     }
-    
+
     private void openDatabase() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Open Database File");
@@ -116,24 +114,24 @@ public class App extends Application {
         if (file != null) {
             currentDatabasePath = file.getAbsolutePath();
             logger.info("Opening database: {}", currentDatabasePath);
-            
-            // Clear existing tabs
+
             TabPane tabPane = (TabPane) ((BorderPane) stage.getScene().getRoot()).getCenter();
             tabPane.getTabs().clear();
             
             updateStatus("Loading database: " + file.getName());
-            
+
+            // TODO software shit
             // Load database in a background thread
             new Thread(() -> {
                 try {
-                    List<CommData> commsWithCalls = databaseLoader.loadCommsWithCalls(currentDatabasePath);
+                    List<CommandData> commsWithCalls = databaseLoader.loadCommands(currentDatabasePath);
                     
                     // Update UI on JavaFX thread
                     Platform.runLater(() -> {
-                        for (CommData commData : commsWithCalls) {
+                        for (CommandData commandData : commsWithCalls) {
                             Tab tab = new Tab();
-                            tab.setText(commData.getComm().getComm() + " (" + commData.getComm().getId() + ")");
-                            tab.setContent(databaseView.createCommView(currentDatabasePath, commData));
+                            tab.setText("stub command " + " (" + commandData.getId() + ")");
+                            tab.setContent(databaseView.createCommView(currentDatabasePath, commandData));
                             tab.setClosable(false);
                             tabPane.getTabs().add(tab);
                         }
