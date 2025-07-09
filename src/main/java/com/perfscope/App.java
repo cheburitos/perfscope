@@ -1,6 +1,12 @@
 package com.perfscope;
+
+import com.perfscope.db.DatabaseLoader;
+import com.perfscope.model.CommData;
+import com.perfscope.ui.DatabaseView;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
@@ -12,18 +18,12 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.sql.SQLException;
 import java.util.List;
-
-import com.perfscope.ui.DatabaseView;
-import com.perfscope.db.DatabaseLoader;
-import com.perfscope.model.CommData;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class App extends Application {
 

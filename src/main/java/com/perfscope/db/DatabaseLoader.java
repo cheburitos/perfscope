@@ -2,12 +2,11 @@ package com.perfscope.db;
 
 import com.perfscope.model.CallTreeData;
 import com.perfscope.model.CommData;
-import com.perfscope.model.tables.Comms;
 import com.perfscope.model.tables.Calls;
 import com.perfscope.model.tables.CommThreads;
+import com.perfscope.model.tables.Comms;
 import com.perfscope.model.tables.Threads;
 import com.perfscope.model.tables.records.CommsRecord;
-
 import org.jooq.DSLContext;
 import org.jooq.Record3;
 import org.jooq.Result;
