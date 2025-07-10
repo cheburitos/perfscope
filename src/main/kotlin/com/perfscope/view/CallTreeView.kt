@@ -11,19 +11,22 @@ import javafx.scene.input.KeyCode
 import javafx.scene.input.ClipboardContent
 import com.perfscope.view.CallTreeView
 import javafx.beans.value.ObservableValue
+import javafx.event.EventHandler
+import javafx.scene.input.KeyEvent
+import javafx.util.Callback
 import java.sql.SQLException
 
 class CallTreeView : TreeView<CallTreeData?>() {
     private val databaseLoader: DatabaseLoader = DatabaseLoader()
 
     init {
-        setRoot(TreeItem<CallTreeData?>(CallTreeData.stub("Call Tree")))
+        root = TreeItem<CallTreeData?>(CallTreeData.stub("Call Tree"))
         setShowRoot(false)
-        setCellFactory(javafx.util.Callback { tv: TreeView<CallTreeData?>? -> CallTreeCell() })
-        setOnKeyPressed(javafx.event.EventHandler { event: javafx.scene.input.KeyEvent -> this.handleKeyPress(event) })
+        cellFactory = Callback { tv: TreeView<CallTreeData?>? -> CallTreeCell() }
+        onKeyPressed = javafx.event.EventHandler { event: KeyEvent -> this.handleKeyPress(event) }
     }
 
-    private fun handleKeyPress(event: javafx.scene.input.KeyEvent) {
+    private fun handleKeyPress(event: KeyEvent) {
         if (event.isControlDown() && event.getCode() == KeyCode.C) {
             copySelectedNodeToClipboard()
             event.consume()
@@ -31,7 +34,7 @@ class CallTreeView : TreeView<CallTreeData?>() {
     }
 
     private fun copySelectedNodeToClipboard() {
-        val selectedItem: TreeItem<CallTreeData?> = getSelectionModel().getSelectedItem()
+        val selectedItem: TreeItem<CallTreeData?> = selectionModel.selectedItem
         if (selectedItem != null) {
             val data: CallTreeData? = selectedItem.getValue()
             val textToCopy: String?
@@ -47,7 +50,7 @@ class CallTreeView : TreeView<CallTreeData?>() {
             }
 
             val clipboard: javafx.scene.input.Clipboard = javafx.scene.input.Clipboard.getSystemClipboard()
-            val content: ClipboardContent = ClipboardContent()
+            val content = ClipboardContent()
             content.putString(textToCopy)
             clipboard.setContent(content)
 
@@ -79,7 +82,7 @@ class CallTreeView : TreeView<CallTreeData?>() {
             )
 
             for (nodeData in nodes) {
-                nodeData.setTotalTimeNanos(totalTimeNanos)
+                nodeData.totalTimeNanos = totalTimeNanos
 
                 val item = TreeItem<CallTreeData?>(nodeData)
 

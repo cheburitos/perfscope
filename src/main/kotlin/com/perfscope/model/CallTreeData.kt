@@ -10,10 +10,6 @@ class CallTreeData(
 ) {
     private var totalTimeNanos = 1L
 
-    fun setTotalTimeNanos(totalTimeNanos: Long) {
-        this.totalTimeNanos = totalTimeNanos
-    }
-
     val timeRatio: Double
         get() = timeNanos!!.toDouble() / totalTimeNanos
 
