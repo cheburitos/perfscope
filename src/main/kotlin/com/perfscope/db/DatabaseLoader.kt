@@ -20,7 +20,7 @@ import kotlin.time.Duration
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
-class DatabaseLoader(private val databasePath: String) {
+class DatabaseLoader(private val dbPath: String) {
 
     companion object {
         val logger: Logger = LoggerFactory.getLogger(DatabaseLoader::class.java)
@@ -28,10 +28,10 @@ class DatabaseLoader(private val databasePath: String) {
     }
 
     @Throws(SQLException::class)
-    fun fetchCommands(databasePath: String): List<CommandData> {
+    fun fetchCommands(dbPath: String): List<CommandData> {
         val result = mutableListOf<CommandData>()
 
-        DatabaseConnectionHolder(databasePath).use { connection: DatabaseConnectionHolder ->
+        DatabaseConnectionHolder(dbPath).use { connection: DatabaseConnectionHolder ->
             val context: DSLContext = connection.context
             val commandsWithCalls = context.selectFrom(Comms.COMMS)
                 .where(COMMS.HAS_CALLS.eq(true))
@@ -59,8 +59,8 @@ class DatabaseLoader(private val databasePath: String) {
         return result
     }
 
-    fun fetchCalls(commId: Long, threadId: Long, parentCallPathId: Long, fromCallTime: Long?, toReturnTime: Long?): List<CallTreeData> {
-        DatabaseConnectionHolder(databasePath).use { connection: DatabaseConnectionHolder ->
+    fun fetchCalls(commandId: Long, threadId: Long, parentCallPathId: Long, fromCallTime: Long?, toReturnTime: Long?): List<CallTreeData> {
+        DatabaseConnectionHolder(dbPath).use { connection: DatabaseConnectionHolder ->
             var select = connection.context.select(
                 CALLS.CALL_PATH_ID,
                 SYMBOLS.NAME,
@@ -72,7 +72,7 @@ class DatabaseLoader(private val databasePath: String) {
                 .innerJoin(SYMBOLS).on(CALL_PATHS.SYMBOL_ID.eq(SYMBOLS.ID.cast(Long::class.java)))
                 .innerJoin(DSOS).on(SYMBOLS.DSO_ID.eq(DSOS.ID.cast(Long::class.java)))
                 .where(CALLS.PARENT_CALL_PATH_ID.eq(parentCallPathId))
-                .and(CALLS.COMM_ID.eq(commId))
+                .and(CALLS.COMM_ID.eq(commandId))
                 .and(CALLS.THREAD_ID.eq(threadId))
             if (fromCallTime != null && toReturnTime != null) {
                 select = select
@@ -90,7 +90,7 @@ class DatabaseLoader(private val databasePath: String) {
     }
 
     fun calcTotalTime(commandId: Long, threadId: Long): Duration {
-        DatabaseConnectionHolder(databasePath).use { connection: DatabaseConnectionHolder ->
+        DatabaseConnectionHolder(dbPath).use { connection: DatabaseConnectionHolder ->
             val totalDurationNanos = connection.context.select(DSL.sum(CALLS.RETURN_TIME - CALLS.CALL_TIME).cast(Long::class.java))
                 .from(CALLS)
                 .where(CALLS.PARENT_CALL_PATH_ID.eq(ROOT_PARENT_CALL_PATH_ID))

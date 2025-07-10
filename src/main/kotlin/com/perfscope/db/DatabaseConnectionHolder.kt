@@ -12,13 +12,13 @@ import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.SQLException
 
-class DatabaseConnectionHolder(databasePath: String) : AutoCloseable {
-    private val connection: Connection?
+class DatabaseConnectionHolder(dbPath: String) : AutoCloseable {
+    private val connection: Connection
     val context: DSLContext
 
     init {
-        logger.debug("Opening database connection to: $databasePath")
-        this.connection = DriverManager.getConnection("jdbc:sqlite:" + databasePath)
+        logger.debug("Opening database connection to: $dbPath")
+        this.connection = DriverManager.getConnection("jdbc:sqlite:$dbPath")
 
         val configuration = DefaultConfiguration()
         configuration.set(connection)
@@ -30,7 +30,7 @@ class DatabaseConnectionHolder(databasePath: String) : AutoCloseable {
 
     @Throws(SQLException::class)
     override fun close() {
-        if (connection != null && !connection.isClosed) {
+        if (!connection.isClosed) {
             connection.close()
         }
     }

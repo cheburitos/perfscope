@@ -3,17 +3,19 @@ package com.perfscope.view
 import javafx.scene.control.TreeView
 import com.perfscope.model.CallTreeData
 import com.perfscope.db.DatabaseLoader
+import javafx.beans.value.ChangeListener
 import javafx.scene.control.TreeItem
 import javafx.scene.input.KeyCode
 import javafx.scene.input.ClipboardContent
 import javafx.beans.value.ObservableValue
+import javafx.scene.input.Clipboard
 import javafx.scene.input.KeyEvent
 import javafx.util.Callback
 import java.sql.SQLException
 import kotlin.time.Duration
 
 class CallTreeView(val dbPath: String) : TreeView<CallTreeData?>() {
-    private val dbLoaderK = DatabaseLoader(dbPath)
+    private val dbLoader = DatabaseLoader(dbPath)
 
     init {
         root = TreeItem<CallTreeData?>(CallTreeData.stub("Call Tree"))
@@ -23,7 +25,7 @@ class CallTreeView(val dbPath: String) : TreeView<CallTreeData?>() {
     }
 
     private fun handleKeyPress(event: KeyEvent) {
-        if (event.isControlDown() && event.getCode() == KeyCode.C) {
+        if (event.isControlDown && event.code == KeyCode.C) {
             copySelectedNodeToClipboard()
             event.consume()
         }
@@ -31,45 +33,47 @@ class CallTreeView(val dbPath: String) : TreeView<CallTreeData?>() {
 
     private fun copySelectedNodeToClipboard() {
         val selectedItem: TreeItem<CallTreeData?> = selectionModel.selectedItem
-        if (selectedItem != null) {
-            val data: CallTreeData? = selectedItem.getValue()
-            val textToCopy: String?
+        val data: CallTreeData? = selectedItem.getValue()
+        val textToCopy: String?
 
-            if (data!!.totalTime != null) {
-                textToCopy = String.format(
-                    "%s [%s]",
-                    data!!.name,
-                    com.perfscope.util.Duration.ofNanos(data!!.totalTime!!)
-                )
-            } else {
-                textToCopy = data!!.name
-            }
-
-            val clipboard: javafx.scene.input.Clipboard = javafx.scene.input.Clipboard.getSystemClipboard()
-            val content = ClipboardContent()
-            content.putString(textToCopy)
-            clipboard.setContent(content)
-
-            logger.debug("Copied to clipboard: {}", textToCopy)
+        if (data!!.totalTime != null) {
+            textToCopy = String.format(
+                "%s [%s]",
+                data!!.name,
+                com.perfscope.util.Duration.ofNanos(data!!.totalTime!!)
+            )
+        } else {
+            textToCopy = data!!.name
         }
+
+        val content = ClipboardContent()
+        content.putString(textToCopy)
+        val clipboard = Clipboard.getSystemClipboard()
+        clipboard.setContent(content)
+
+        logger.debug("Copied to clipboard: {}", textToCopy)
     }
 
-    fun loadThreadData(commId: Long, threadId: Long) {
-        setRoot(TreeItem<CallTreeData?>(CallTreeData.stub("Call Tree")))
-        setShowRoot(false)
+    fun loadThreadData(commandId: Long, threadId: Long) {
+        root = TreeItem<CallTreeData?>(CallTreeData.stub("Call Tree"))
+        isShowRoot = false
 
-        val totalTime: Duration = dbLoaderK.calcTotalTime(commId, threadId)
-        loadCallTreeNodes(dbPath, commId, threadId, 1L, getRoot(), totalTime)
+        val totalTime: Duration = dbLoader.calcTotalTime(commandId, threadId)
+        loadCallTreeNodes(dbPath, commandId, threadId, 1L, getRoot(), totalTime)
     }
 
     private fun loadCallTreeNodes(
-        databasePath: String?, commId: Long?, threadId: Long, parentCallPathId: Long?,
-        parentItem: TreeItem<CallTreeData?>, totalTime: Duration
+        dbPath: String,
+        commandId: Long,
+        threadId: Long,
+        parentCallPathId: Long?,
+        parentItem: TreeItem<CallTreeData?>,
+        totalTime: Duration
     ) {
         try {
             val callTreeData: CallTreeData? = parentItem.getValue()
-            val nodes: List<CallTreeData> = dbLoaderK.fetchCalls(
-                commId!!,
+            val nodes: List<CallTreeData> = dbLoader.fetchCalls(
+                commandId,
                 threadId,
                 parentCallPathId!!,
                 callTreeData!!.callTime,
@@ -82,27 +86,24 @@ class CallTreeView(val dbPath: String) : TreeView<CallTreeData?>() {
                 val item = TreeItem<CallTreeData?>(nodeData)
 
                 // Add a dummy child to show expand arrow (will be replaced when expanded)
-                item.getChildren()
-                    .add(TreeItem<CallTreeData?>(CallTreeData.stub(DUMMY_LOADING_NODE_NAME)))
+                item.children += TreeItem<CallTreeData?>(CallTreeData.stub(DUMMY_LOADING_NODE_NAME))
 
                 item.expandedProperty()
-                    .addListener(javafx.beans.value.ChangeListener { observable: ObservableValue<out Boolean?>?, oldValue: Boolean, newValue: Boolean ->
-                        if (newValue && item.getChildren().size == 1 &&
-                            item.getChildren().get(0).getValue()!!.name == DUMMY_LOADING_NODE_NAME
-                        ) {
-                            item.getChildren().clear()
+                    .addListener(ChangeListener { observable: ObservableValue<out Boolean?>?, oldValue: Boolean, newValue: Boolean ->
+                        if (newValue && item.getChildren().size == 1 && item.children[0].getValue()!!.name == DUMMY_LOADING_NODE_NAME) {
+                            item.children.clear()
 
                             loadCallTreeNodes(
-                                databasePath,
-                                commId,
+                                dbPath,
+                                commandId,
                                 threadId,
                                 item.getValue()!!.callPathId,
                                 item,
                                 totalTime
                             )
 
-                            if (item.getChildren().isEmpty()) {
-                                item.getChildren().add(TreeItem<CallTreeData?>(CallTreeData.stub("(No calls)")))
+                            if (item.children.isEmpty()) {
+                                item.children += TreeItem<CallTreeData?>(CallTreeData.stub("(No calls)"))
                             }
                         }
                     })
@@ -117,7 +118,8 @@ class CallTreeView(val dbPath: String) : TreeView<CallTreeData?>() {
     }
 
     companion object {
-        private val logger: org.slf4j.Logger = org.slf4j.LoggerFactory.getLogger(CallTreeView::class.java)
-        private const val DUMMY_LOADING_NODE_NAME: kotlin.String = "Loading..."
+        private val logger = org.slf4j.LoggerFactory.getLogger(CallTreeView::class.java)
+        private const val DUMMY_LOADING_NODE_NAME: String = "Loading..."
     }
+
 }

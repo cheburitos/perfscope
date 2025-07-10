@@ -9,6 +9,7 @@ import javafx.scene.layout.VBox
 import javafx.scene.control.ListView
 
 class DatabaseView {
+
     fun createCommView(dbPath: String, commandData: CommandData): BorderPane {
         val tabContent = BorderPane()
 
