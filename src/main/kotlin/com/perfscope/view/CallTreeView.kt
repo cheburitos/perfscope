@@ -1,27 +1,19 @@
 package com.perfscope.view
 
-import com.perfscope.model.CallTreeData.Companion.stub
-import com.perfscope.util.Duration.Companion.ofNanos
 import javafx.scene.control.TreeView
 import com.perfscope.model.CallTreeData
 import com.perfscope.db.DatabaseLoader
-import com.perfscope.db.DatabaseLoaderK
 import javafx.scene.control.TreeItem
-import com.perfscope.view.CallTreeCell
 import javafx.scene.input.KeyCode
 import javafx.scene.input.ClipboardContent
-import com.perfscope.view.CallTreeView
 import javafx.beans.value.ObservableValue
-import javafx.event.EventHandler
 import javafx.scene.input.KeyEvent
 import javafx.util.Callback
 import java.sql.SQLException
 import kotlin.time.Duration
-import kotlin.time.DurationUnit
 
 class CallTreeView(val dbPath: String) : TreeView<CallTreeData?>() {
-    private val databaseLoader: DatabaseLoader = DatabaseLoader()
-    private val dbLoaderK = DatabaseLoaderK(dbPath)
+    private val dbLoaderK = DatabaseLoader(dbPath)
 
     init {
         root = TreeItem<CallTreeData?>(CallTreeData.stub("Call Tree"))
@@ -44,7 +36,7 @@ class CallTreeView(val dbPath: String) : TreeView<CallTreeData?>() {
             val textToCopy: String?
 
             if (data!!.totalTime != null) {
-                textToCopy = kotlin.String.format(
+                textToCopy = String.format(
                     "%s [%s]",
                     data!!.name,
                     com.perfscope.util.Duration.ofNanos(data!!.totalTime!!)
@@ -58,7 +50,7 @@ class CallTreeView(val dbPath: String) : TreeView<CallTreeData?>() {
             content.putString(textToCopy)
             clipboard.setContent(content)
 
-            CallTreeView.Companion.logger.debug("Copied to clipboard: {}", textToCopy)
+            logger.debug("Copied to clipboard: {}", textToCopy)
         }
     }
 
@@ -76,11 +68,10 @@ class CallTreeView(val dbPath: String) : TreeView<CallTreeData?>() {
     ) {
         try {
             val callTreeData: CallTreeData? = parentItem.getValue()
-            val nodes: kotlin.collections.MutableList<CallTreeData> = databaseLoader.loadCallTreeNodes(
-                databasePath,
-                commId,
+            val nodes: List<CallTreeData> = dbLoaderK.fetchCalls(
+                commId!!,
                 threadId,
-                parentCallPathId,
+                parentCallPathId!!,
                 callTreeData!!.callTime,
                 callTreeData!!.returnTime
             )
@@ -92,12 +83,12 @@ class CallTreeView(val dbPath: String) : TreeView<CallTreeData?>() {
 
                 // Add a dummy child to show expand arrow (will be replaced when expanded)
                 item.getChildren()
-                    .add(TreeItem<CallTreeData?>(CallTreeData.stub(CallTreeView.Companion.DUMMY_LOADING_NODE_NAME)))
+                    .add(TreeItem<CallTreeData?>(CallTreeData.stub(DUMMY_LOADING_NODE_NAME)))
 
                 item.expandedProperty()
                     .addListener(javafx.beans.value.ChangeListener { observable: ObservableValue<out Boolean?>?, oldValue: Boolean, newValue: Boolean ->
                         if (newValue && item.getChildren().size == 1 &&
-                            item.getChildren().get(0).getValue()!!.name == CallTreeView.Companion.DUMMY_LOADING_NODE_NAME
+                            item.getChildren().get(0).getValue()!!.name == DUMMY_LOADING_NODE_NAME
                         ) {
                             item.getChildren().clear()
 
@@ -119,7 +110,7 @@ class CallTreeView(val dbPath: String) : TreeView<CallTreeData?>() {
                 parentItem.getChildren().add(item)
             }
         } catch (e: SQLException) {
-            CallTreeView.Companion.logger.error("Error loading call tree nodes: {}", e.message, e)
+            logger.error("Error loading call tree nodes: {}", e.message, e)
 
             parentItem.getChildren().add(TreeItem<CallTreeData?>(CallTreeData.stub("Error loading data: " + e.message)))
         }

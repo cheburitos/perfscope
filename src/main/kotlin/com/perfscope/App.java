@@ -1,6 +1,6 @@
 package com.perfscope;
 
-import com.perfscope.db.DatabaseLoaderK;
+import com.perfscope.db.DatabaseLoader;
 import com.perfscope.model.CommandData;
 import com.perfscope.view.DatabaseView;
 import javafx.application.Application;
@@ -31,7 +31,7 @@ public class App extends Application {
     public static Stage stage;
 
     private String dbPath = "examples/pt_example";
-    private DatabaseLoaderK databaseLoaderK;
+    private DatabaseLoader databaseLoader;
     private DatabaseView databaseView;
 
     public static void main(String[] args) {
@@ -119,14 +119,14 @@ public class App extends Application {
             
             updateStatus("Loading database: " + file.getName());
 
-            databaseLoaderK = new DatabaseLoaderK(dbPath);
+            databaseLoader = new DatabaseLoader(dbPath);
 
             // TODO software shit
             // Load database in a background thread
             new Thread(() -> {
                 try {
 
-                    List<CommandData> commsWithCalls = databaseLoaderK.fetchCommands(dbPath);
+                    List<CommandData> commsWithCalls = databaseLoader.fetchCommands(dbPath);
                     
                     // Update UI on JavaFX thread
                     Platform.runLater(() -> {
