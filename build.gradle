@@ -50,7 +50,7 @@ jooq {
                         immutablePojos = true
                     }
                     target {
-                        packageName = 'com.perfscope.model2'
+                        packageName = 'com.perfscope.model'
                         directory = 'src/jooq/kotlin'
                     }
                     strategy.name = 'org.jooq.codegen.DefaultGeneratorStrategy'
