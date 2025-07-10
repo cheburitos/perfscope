@@ -58,7 +58,7 @@ class CallTreeView : TreeView<CallTreeData?>() {
         }
     }
 
-    fun loadThreadData(databasePath: kotlin.String?, commId: Long?, threadId: Long?) {
+    fun loadThreadData(databasePath: kotlin.String?, commId: Long?, threadId: Long) {
         setRoot(TreeItem<CallTreeData?>(CallTreeData.stub("Call Tree")))
         setShowRoot(false)
 
@@ -67,7 +67,7 @@ class CallTreeView : TreeView<CallTreeData?>() {
     }
 
     private fun loadCallTreeNodes(
-        databasePath: kotlin.String?, commId: Long?, threadId: Long?, parentCallPathId: Long?,
+        databasePath: String?, commId: Long?, threadId: Long, parentCallPathId: Long?,
         parentItem: TreeItem<CallTreeData?>, totalTimeNanos: Long
     ) {
         try {

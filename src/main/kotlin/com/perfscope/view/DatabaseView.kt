@@ -2,6 +2,7 @@ package com.perfscope.view
 
 import org.jooq.Record3
 import com.perfscope.model.CommandData
+import com.perfscope.model.ThreadData
 import javafx.scene.layout.BorderPane
 import javafx.scene.control.Label
 import javafx.scene.control.SplitPane
@@ -15,8 +16,8 @@ class DatabaseView {
 
         val threadListView = ListView<String?>()
 
-        for (thread in commandData.threads!!) {
-            threadListView.items += String.format("PID: %d, TID: %d", thread!!.value2(), thread!!.value3())
+        for (thread in commandData.threads) {
+            threadListView.items += String.format("PID: %d, TID: %d", thread.pid, thread.tid)
         }
 
         val callTreeView = CallTreeView()
@@ -25,10 +26,9 @@ class DatabaseView {
             if (newValue != null) {
                 val selectedIndex: Int = threadListView.getSelectionModel().selectedIndex
                 if (selectedIndex >= 0 && selectedIndex < commandData.threads!!.size) {
-                    val selectedThread: Record3<Long?, Int?, Int?>? = commandData.threads.get(selectedIndex)
-                    val threadId = selectedThread!!.value1()!!
+                    val selectedThread: ThreadData = commandData.threads.get(selectedIndex)
 
-                    callTreeView.loadThreadData(databasePath, commandData.id, threadId)
+                    callTreeView.loadThreadData(databasePath, commandData.id, selectedThread.id)
                 }
             }
         }

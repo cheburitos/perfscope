@@ -25,7 +25,7 @@ jooq {
                     url = 'jdbc:sqlite:examples/pt_example'
                 }
                 generator {
-                    name = 'org.jooq.codegen.DefaultGenerator'
+                    name = 'org.jooq.codegen.KotlinGenerator'
                     database {
                         name = 'org.jooq.meta.sqlite.SQLiteDatabase'
                         forcedTypes {
@@ -43,13 +43,15 @@ jooq {
                     }
                     generate {
                         deprecated = false
+                        kotlinSetterJvmNameAnnotationsOnIsPrefix = true
+                        pojosAsKotlinDataClasses = true
+                        fluentSetters = true
                         records = true
                         immutablePojos = true
-                        fluentSetters = true
                     }
                     target {
-                        packageName = 'com.perfscope.model'
-                        directory = 'src/jooq/main'
+                        packageName = 'com.perfscope.model2'
+                        directory = 'src/jooq/kotlin'
                     }
                     strategy.name = 'org.jooq.codegen.DefaultGeneratorStrategy'
                 }
@@ -120,6 +122,7 @@ dependencies {
 sourceSets {
     main.java.srcDirs = [
             'src/jooq/java',
+            'src/jooq/kotlin',
             'src/main/kotlin',
             '../src/main/kotlin'
     ]

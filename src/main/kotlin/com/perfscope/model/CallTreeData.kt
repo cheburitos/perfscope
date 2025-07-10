@@ -8,7 +8,7 @@ class CallTreeData(
     val callTime: Long?,
     val returnTime: Long?
 ) {
-    private var totalTimeNanos = 1L
+    var totalTimeNanos = 1L
 
     val timeRatio: Double
         get() = timeNanos!!.toDouble() / totalTimeNanos

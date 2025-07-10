@@ -1,56 +1,20 @@
 package com.perfscope.db;
 
 import com.perfscope.model.CallTreeData;
-import com.perfscope.model.CommandData;
 import com.perfscope.model.tables.Calls;
-import com.perfscope.model.tables.CommThreads;
-import com.perfscope.model.tables.Comms;
-import com.perfscope.model.tables.Threads;
-import com.perfscope.model.tables.records.CommsRecord;
 import org.jooq.DSLContext;
-import org.jooq.Record3;
 import org.jooq.Result;
 import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 
 public class DatabaseLoader {
     
     private static final Logger logger = LoggerFactory.getLogger(DatabaseLoader.class);
     private static final long ROOT_PARENT_CALL_PATH_ID = 1L;
-
-    public List<CommandData> loadCommands(String databasePath) throws SQLException {
-        logger.info("Loading comms with calls from: {}", databasePath);
-        List<CommandData> result = new ArrayList<>();
-        
-        try (DatabaseConnectionHolder dbConnection = new DatabaseConnectionHolder(databasePath)) {
-            DSLContext context = dbConnection.getContext();
-            
-            List<CommsRecord> commsWithCalls = context
-                .selectFrom(Comms.COMMS)
-                .where(Comms.COMMS.HAS_CALLS.eq(true))
-                .fetch();
-            
-            logger.info("Found {} comms with calls", commsWithCalls.size());
-            
-            for (CommsRecord comm : commsWithCalls) {
-                Result<Record3<Long, Integer, Integer>> threads = context
-                    .select(CommThreads.COMM_THREADS.THREAD_ID, Threads.THREADS.PID, Threads.THREADS.TID)
-                    .from(CommThreads.COMM_THREADS)
-                    .innerJoin(Threads.THREADS).on(CommThreads.COMM_THREADS.THREAD_ID.eq(Threads.THREADS.ID.cast(Long.class)))
-                    .where(CommThreads.COMM_THREADS.COMM_ID.eq(comm.getId().longValue()))
-                    .fetch();
-                
-                result.add(new CommandData(comm.getId(), comm.getComm(), threads));
-            }
-        }
-        
-        return result;
-    }
     
     public Long calculateTotalTimeNanos(String databasePath, Long commId, Long threadId) {
         logger.debug("Calculating total time for comm: {}, thread: {}", commId, threadId);
