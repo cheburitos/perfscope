@@ -5,6 +5,7 @@ import com.perfscope.util.Duration.Companion.ofNanos
 import javafx.scene.control.TreeView
 import com.perfscope.model.CallTreeData
 import com.perfscope.db.DatabaseLoader
+import com.perfscope.db.DatabaseLoaderK
 import javafx.scene.control.TreeItem
 import com.perfscope.view.CallTreeCell
 import javafx.scene.input.KeyCode
@@ -15,9 +16,12 @@ import javafx.event.EventHandler
 import javafx.scene.input.KeyEvent
 import javafx.util.Callback
 import java.sql.SQLException
+import kotlin.time.Duration
+import kotlin.time.DurationUnit
 
-class CallTreeView : TreeView<CallTreeData?>() {
+class CallTreeView(val dbPath: String) : TreeView<CallTreeData?>() {
     private val databaseLoader: DatabaseLoader = DatabaseLoader()
+    private val dbLoaderK = DatabaseLoaderK(dbPath)
 
     init {
         root = TreeItem<CallTreeData?>(CallTreeData.stub("Call Tree"))
@@ -58,17 +62,17 @@ class CallTreeView : TreeView<CallTreeData?>() {
         }
     }
 
-    fun loadThreadData(databasePath: kotlin.String?, commId: Long?, threadId: Long) {
+    fun loadThreadData(commId: Long, threadId: Long) {
         setRoot(TreeItem<CallTreeData?>(CallTreeData.stub("Call Tree")))
         setShowRoot(false)
 
-        val totalTimeNanos: Long = databaseLoader.calculateTotalTimeNanos(databasePath, commId, threadId)
-        loadCallTreeNodes(databasePath, commId, threadId, 1L, getRoot(), totalTimeNanos)
+        val totalTime: Duration = dbLoaderK.calcTotalTime(commId, threadId)
+        loadCallTreeNodes(dbPath, commId, threadId, 1L, getRoot(), totalTime)
     }
 
     private fun loadCallTreeNodes(
         databasePath: String?, commId: Long?, threadId: Long, parentCallPathId: Long?,
-        parentItem: TreeItem<CallTreeData?>, totalTimeNanos: Long
+        parentItem: TreeItem<CallTreeData?>, totalTime: Duration
     ) {
         try {
             val callTreeData: CallTreeData? = parentItem.getValue()
@@ -82,7 +86,7 @@ class CallTreeView : TreeView<CallTreeData?>() {
             )
 
             for (nodeData in nodes) {
-                nodeData.totalTimeNanos = totalTimeNanos
+                nodeData.totalThreadTime = totalTime // TODO rename to totalThreadTime
 
                 val item = TreeItem<CallTreeData?>(nodeData)
 
@@ -103,7 +107,7 @@ class CallTreeView : TreeView<CallTreeData?>() {
                                 threadId,
                                 item.getValue()!!.callPathId,
                                 item,
-                                totalTimeNanos
+                                totalTime
                             )
 
                             if (item.getChildren().isEmpty()) {

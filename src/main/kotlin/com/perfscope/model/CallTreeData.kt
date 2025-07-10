@@ -1,5 +1,8 @@
 package com.perfscope.model
 
+import kotlin.time.DurationUnit.NANOSECONDS
+import kotlin.time.toDuration
+
 class CallTreeData(
     val name: String?,
     val totalTime: Long?,
@@ -8,10 +11,11 @@ class CallTreeData(
     val callTime: Long?,
     val returnTime: Long?
 ) {
-    var totalTimeNanos = 1L
+    // Total time of thread
+    var totalThreadTime = 1.toDuration(NANOSECONDS)
 
     val timeRatio: Double
-        get() = timeNanos!!.toDouble() / totalTimeNanos
+        get() = timeNanos!!.toDouble() / totalThreadTime.toLong(NANOSECONDS)
 
     companion object {
         @JvmStatic

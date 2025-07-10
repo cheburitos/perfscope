@@ -14,32 +14,6 @@ import java.util.List;
 public class DatabaseLoader {
     
     private static final Logger logger = LoggerFactory.getLogger(DatabaseLoader.class);
-    private static final long ROOT_PARENT_CALL_PATH_ID = 1L;
-    
-    public Long calculateTotalTimeNanos(String databasePath, Long commId, Long threadId) {
-        logger.debug("Calculating total time for comm: {}, thread: {}", commId, threadId);
-        try (DatabaseConnectionHolder dbConnection = new DatabaseConnectionHolder(databasePath)) {
-            DSLContext queryContext = dbConnection.getContext();
-
-            Result<?> nodes = queryContext
-                .select(DSL.sum(Calls.CALLS.RETURN_TIME.minus(Calls.CALLS.CALL_TIME)))
-                .from(Calls.CALLS)
-                .where(Calls.CALLS.PARENT_CALL_PATH_ID.eq(ROOT_PARENT_CALL_PATH_ID))
-                .and(Calls.CALLS.COMM_ID.eq(commId))
-                .and(Calls.CALLS.THREAD_ID.eq(threadId))
-                .groupBy(Calls.CALLS.CALL_PATH_ID)
-                .fetch();
-            
-            Long totalTimeNanos = 0L;
-            for (org.jooq.Record record : nodes) {
-                totalTimeNanos += record.get(0, Long.class);
-            }
-            return totalTimeNanos != 0L ? totalTimeNanos: 1L;
-        } catch (Exception e) {
-            logger.error("Error calculating total time: {}", e.getMessage(), e);
-            return 1L;
-        }
-    }
 
     public List<CallTreeData> loadCallTreeNodes(
         String databasePath,

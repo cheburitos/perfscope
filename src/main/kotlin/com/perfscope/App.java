@@ -30,7 +30,7 @@ public class App extends Application {
     private static final Logger logger = LoggerFactory.getLogger(App.class);
     public static Stage stage;
 
-    private String currentDatabasePath = "examples/pt_example";
+    private String dbPath = "examples/pt_example";
     private DatabaseLoaderK databaseLoaderK;
     private DatabaseView databaseView;
 
@@ -45,7 +45,6 @@ public class App extends Application {
         stage = primaryStage;
         stage.setTitle("PerfScope");
 
-        databaseLoaderK = new DatabaseLoaderK();
         databaseView = new DatabaseView();
         
         Scene scene = new Scene(createRootPane(), 1000, 700);
@@ -104,7 +103,7 @@ public class App extends Application {
         fileChooser.setTitle("Open Database File");
         
         // Set initial directory if current database path exists
-        File initialDir = new File(currentDatabasePath).getParentFile();
+        File initialDir = new File(dbPath).getParentFile();
         if (initialDir != null && initialDir.exists()) {
             fileChooser.setInitialDirectory(initialDir);
         }
@@ -112,26 +111,29 @@ public class App extends Application {
         File file = fileChooser.showOpenDialog(stage);
         
         if (file != null) {
-            currentDatabasePath = file.getAbsolutePath();
-            logger.info("Opening database: {}", currentDatabasePath);
+            dbPath = file.getAbsolutePath();
+            logger.info("Opening database: {}", dbPath);
 
             TabPane tabPane = (TabPane) ((BorderPane) stage.getScene().getRoot()).getCenter();
             tabPane.getTabs().clear();
             
             updateStatus("Loading database: " + file.getName());
 
+            databaseLoaderK = new DatabaseLoaderK(dbPath);
+
             // TODO software shit
             // Load database in a background thread
             new Thread(() -> {
                 try {
-                    List<CommandData> commsWithCalls = databaseLoaderK.fetchCommands(currentDatabasePath);
+
+                    List<CommandData> commsWithCalls = databaseLoaderK.fetchCommands(dbPath);
                     
                     // Update UI on JavaFX thread
                     Platform.runLater(() -> {
                         for (CommandData commandData : commsWithCalls) {
                             Tab tab = new Tab();
                             tab.setText(commandData.getCommand() + " " + " (" + commandData.getId() + ")");
-                            tab.setContent(databaseView.createCommView(currentDatabasePath, commandData));
+                            tab.setContent(databaseView.createCommView(dbPath, commandData));
                             tab.setClosable(false);
                             tabPane.getTabs().add(tab);
                         }
