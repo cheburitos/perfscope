@@ -130,7 +130,7 @@ public class App extends Application {
                     Platform.runLater(() -> {
                         for (CommandData commandData : commsWithCalls) {
                             Tab tab = new Tab();
-                            tab.setText("stub command " + " (" + commandData.getId() + ")");
+                            tab.setText(commandData.getCommand() + " " + " (" + commandData.getId() + ")");
                             tab.setContent(databaseView.createCommView(currentDatabasePath, commandData));
                             tab.setClosable(false);
                             tabPane.getTabs().add(tab);
