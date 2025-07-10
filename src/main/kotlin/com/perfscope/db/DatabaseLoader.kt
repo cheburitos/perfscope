@@ -1,8 +1,8 @@
 package com.perfscope.db
 
-import com.perfscope.model.CallTreeData
-import com.perfscope.model.CommandData
-import com.perfscope.model.ThreadData
+import com.perfscope.model.Call
+import com.perfscope.model.Command
+import com.perfscope.model.Thread
 import com.perfscope.model.tables.Comms
 import com.perfscope.model.tables.references.CALLS
 import com.perfscope.model.tables.references.CALL_PATHS
@@ -28,8 +28,8 @@ class DatabaseLoader(private val dbPath: String) {
     }
 
     @Throws(SQLException::class)
-    fun fetchCommands(dbPath: String): List<CommandData> {
-        val result = mutableListOf<CommandData>()
+    fun fetchCommands(dbPath: String): List<Command> {
+        val result = mutableListOf<Command>()
 
         DatabaseConnectionHolder(dbPath).use { connection: DatabaseConnectionHolder ->
             val context: DSLContext = connection.context
@@ -47,10 +47,10 @@ class DatabaseLoader(private val dbPath: String) {
                     .where(COMM_THREADS.COMM_ID.eq(command.id?.toLong()))
                     .and(COMM_THREADS.THREAD_ID.isNotNull)
                     .fetch()
-                    .map { (threadId, pid, tid) -> ThreadData(threadId, pid, tid) }
+                    .map { (threadId, pid, tid) -> Thread(threadId, pid, tid) }
                 val commandText = command.comm
                 if (commandText != null) {
-                    result += CommandData(command.id!!.toLong(), commandText, threads)
+                    result += Command(command.id!!.toLong(), commandText, threads)
                 }
             }
 
@@ -59,7 +59,7 @@ class DatabaseLoader(private val dbPath: String) {
         return result
     }
 
-    fun fetchCalls(commandId: Long, threadId: Long, parentCallPathId: Long, fromCallTime: Long?, toReturnTime: Long?): List<CallTreeData> {
+    fun fetchCalls(commandId: Long, threadId: Long, parentCallPathId: Long, fromCallTime: Long?, toReturnTime: Long?): List<Call> {
         DatabaseConnectionHolder(dbPath).use { connection: DatabaseConnectionHolder ->
             var select = connection.context.select(
                 CALLS.CALL_PATH_ID,
@@ -83,7 +83,7 @@ class DatabaseLoader(private val dbPath: String) {
             val result = select.orderBy(CALLS.CALL_TIME, CALLS.CALL_PATH_ID)
                 .fetch()
                 .map { (callPathId, name, callTime, returnTime, duration) ->
-                    CallTreeData(name, duration, callPathId, duration, callTime, returnTime)
+                    Call(name, duration, callPathId, duration, callTime, returnTime)
                 }
             return result
         }

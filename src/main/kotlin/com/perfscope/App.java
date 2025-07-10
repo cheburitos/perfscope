@@ -1,7 +1,7 @@
 package com.perfscope;
 
 import com.perfscope.db.DatabaseLoader;
-import com.perfscope.model.CommandData;
+import com.perfscope.model.Command;
 import com.perfscope.view.DatabaseView;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -126,14 +126,14 @@ public class App extends Application {
             new Thread(() -> {
                 try {
 
-                    List<CommandData> commsWithCalls = databaseLoader.fetchCommands(dbPath);
+                    List<Command> commsWithCalls = databaseLoader.fetchCommands(dbPath);
                     
                     // Update UI on JavaFX thread
                     Platform.runLater(() -> {
-                        for (CommandData commandData : commsWithCalls) {
+                        for (Command command : commsWithCalls) {
                             Tab tab = new Tab();
-                            tab.setText(commandData.getCommand() + " " + " (" + commandData.getId() + ")");
-                            tab.setContent(databaseView.createCommView(dbPath, commandData));
+                            tab.setText(command.getCommand() + " " + " (" + command.getId() + ")");
+                            tab.setContent(databaseView.createCommView(dbPath, command));
                             tab.setClosable(false);
                             tabPane.getTabs().add(tab);
                         }

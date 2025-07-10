@@ -1,7 +1,7 @@
 package com.perfscope.view
 
-import com.perfscope.model.CommandData
-import com.perfscope.model.ThreadData
+import com.perfscope.model.Command
+import com.perfscope.model.Thread
 import javafx.scene.layout.BorderPane
 import javafx.scene.control.Label
 import javafx.scene.control.SplitPane
@@ -10,12 +10,12 @@ import javafx.scene.control.ListView
 
 class DatabaseView {
 
-    fun createCommView(dbPath: String, commandData: CommandData): BorderPane {
+    fun createCommView(dbPath: String, command: Command): BorderPane {
         val tabContent = BorderPane()
 
         val threadListView = ListView<String?>()
 
-        for (thread in commandData.threads) {
+        for (thread in command.threads) {
             threadListView.items += String.format("PID: %d, TID: %d", thread.pid, thread.tid)
         }
 
@@ -24,9 +24,9 @@ class DatabaseView {
         threadListView.selectionModel.selectedItemProperty().addListener { observable, oldValue, newValue ->
             if (newValue != null) {
                 val selectedIndex: Int = threadListView.getSelectionModel().selectedIndex
-                if (selectedIndex >= 0 && selectedIndex < commandData.threads!!.size) {
-                    val selectedThread: ThreadData = commandData.threads[selectedIndex]
-                    callTreeView.loadThreadData(commandData.id, selectedThread.id)
+                if (selectedIndex >= 0 && selectedIndex < command.threads!!.size) {
+                    val selectedThread: Thread = command.threads[selectedIndex]
+                    callTreeView.switchThread(command.id, selectedThread.id)
                 }
             }
         }

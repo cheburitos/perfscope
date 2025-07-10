@@ -3,7 +3,7 @@ package com.perfscope.model
 import kotlin.time.DurationUnit.NANOSECONDS
 import kotlin.time.toDuration
 
-class CallTreeData(
+class Call(
     val name: String?,
     val totalTime: Long?,
     val callPathId: Long?,
@@ -19,8 +19,8 @@ class CallTreeData(
 
     companion object {
         @JvmStatic
-        fun stub(name: String?): CallTreeData {
-            return CallTreeData(name, null, 0L, null, null, null)
+        fun stub(name: String?): Call {
+            return Call(name, null, 0L, null, null, null)
         }
     }
 }

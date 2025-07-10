@@ -1,6 +1,6 @@
 package com.perfscope.view
 
-import com.perfscope.model.CallTreeData
+import com.perfscope.model.Call
 import com.perfscope.util.Duration.Companion.ofNanos
 import javafx.geometry.Insets
 import javafx.geometry.Pos
@@ -11,7 +11,7 @@ import javafx.scene.paint.Color
 import javafx.scene.shape.Rectangle
 import kotlin.math.max
 
-class CallTreeCell : TreeCell<CallTreeData?>() {
+class CallTreeCell : TreeCell<Call?>() {
     private val stack = StackPane()
     private val timeBar = Rectangle()
     private val label = Label()
@@ -32,7 +32,7 @@ class CallTreeCell : TreeCell<CallTreeData?>() {
         label.style = "-fx-font-weight: normal; -fx-font-size: 15px;"
     }
 
-    override fun updateItem(item: CallTreeData?, empty: Boolean) {
+    override fun updateItem(item: Call?, empty: Boolean) {
         super.updateItem(item, empty)
 
         if (empty || item == null) {

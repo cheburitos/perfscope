@@ -1,7 +1,7 @@
 package com.perfscope.view
 
 import javafx.scene.control.TreeView
-import com.perfscope.model.CallTreeData
+import com.perfscope.model.Call
 import com.perfscope.db.DatabaseLoader
 import javafx.beans.value.ChangeListener
 import javafx.scene.control.TreeItem
@@ -14,13 +14,13 @@ import javafx.util.Callback
 import java.sql.SQLException
 import kotlin.time.Duration
 
-class CallTreeView(val dbPath: String) : TreeView<CallTreeData?>() {
+class CallTreeView(val dbPath: String) : TreeView<Call?>() {
     private val dbLoader = DatabaseLoader(dbPath)
 
     init {
-        root = TreeItem<CallTreeData?>(CallTreeData.stub("Call Tree"))
+        root = TreeItem<Call?>(Call.stub("Call Tree"))
         setShowRoot(false)
-        cellFactory = Callback { tv: TreeView<CallTreeData?>? -> CallTreeCell() }
+        cellFactory = Callback { tv: TreeView<Call?>? -> CallTreeCell() }
         onKeyPressed = javafx.event.EventHandler { event: KeyEvent -> this.handleKeyPress(event) }
     }
 
@@ -32,88 +32,92 @@ class CallTreeView(val dbPath: String) : TreeView<CallTreeData?>() {
     }
 
     private fun copySelectedNodeToClipboard() {
-        val selectedItem: TreeItem<CallTreeData?> = selectionModel.selectedItem
-        val data: CallTreeData? = selectedItem.getValue()
+        val selectedItem: TreeItem<Call?> = selectionModel.selectedItem
+        val selectedCall: Call? = selectedItem.getValue()
+        if (selectedCall == null) {
+            return
+        }
         val textToCopy: String?
 
-        if (data!!.totalTime != null) {
+        if (selectedCall.totalTime != null) {
             textToCopy = String.format(
                 "%s [%s]",
-                data!!.name,
-                com.perfscope.util.Duration.ofNanos(data!!.totalTime!!)
+                selectedCall.name,
+                com.perfscope.util.Duration.ofNanos(selectedCall.totalTime!!) //TODO some other func
             )
         } else {
-            textToCopy = data!!.name
+            textToCopy = selectedCall.name
         }
 
         val content = ClipboardContent()
         content.putString(textToCopy)
         val clipboard = Clipboard.getSystemClipboard()
         clipboard.setContent(content)
-
         logger.debug("Copied to clipboard: {}", textToCopy)
     }
 
-    fun loadThreadData(commandId: Long, threadId: Long) {
-        root = TreeItem<CallTreeData?>(CallTreeData.stub("Call Tree"))
+    fun switchThread(commandId: Long, threadId: Long) {
+        root = TreeItem<Call?>(Call.stub("Call Tree"))
         isShowRoot = false
 
         val totalTime: Duration = dbLoader.calcTotalTime(commandId, threadId)
-        loadCallTreeNodes(dbPath, commandId, threadId, 1L, getRoot(), totalTime)
+        loadChildrenCalls(dbPath, commandId, threadId, 1L, root, totalTime)
     }
 
-    private fun loadCallTreeNodes(
+    private fun loadChildrenCalls(
         dbPath: String,
         commandId: Long,
         threadId: Long,
-        parentCallPathId: Long?,
-        parentItem: TreeItem<CallTreeData?>,
+        parentCallPathId: Long,
+        parentItem: TreeItem<Call?>,
         totalTime: Duration
     ) {
         try {
-            val callTreeData: CallTreeData? = parentItem.getValue()
-            val nodes: List<CallTreeData> = dbLoader.fetchCalls(
+            val call: Call? = parentItem.getValue()
+            if (call == null) {
+                return
+            }
+            val childrenCalls: List<Call> = dbLoader.fetchCalls(
                 commandId,
                 threadId,
-                parentCallPathId!!,
-                callTreeData!!.callTime,
-                callTreeData!!.returnTime
+                parentCallPathId,
+                call.callTime,
+                call.returnTime
             )
 
-            for (nodeData in nodes) {
-                nodeData.totalThreadTime = totalTime // TODO rename to totalThreadTime
+            for (childCall in childrenCalls) {
+                childCall.totalThreadTime = totalTime // TODO rename to totalThreadTime
 
-                val item = TreeItem<CallTreeData?>(nodeData)
+                val item = TreeItem(childCall)
 
                 // Add a dummy child to show expand arrow (will be replaced when expanded)
-                item.children += TreeItem<CallTreeData?>(CallTreeData.stub(DUMMY_LOADING_NODE_NAME))
+                item.children += TreeItem(Call.stub(DUMMY_LOADING_NODE_NAME))
 
-                item.expandedProperty()
-                    .addListener(ChangeListener { observable: ObservableValue<out Boolean?>?, oldValue: Boolean, newValue: Boolean ->
-                        if (newValue && item.getChildren().size == 1 && item.children[0].getValue()!!.name == DUMMY_LOADING_NODE_NAME) {
-                            item.children.clear()
+                item.expandedProperty().addListener { _: ObservableValue<out Boolean?>?, oldValue: Boolean, newValue: Boolean ->
+                    if (newValue && item.children.size == 1 && item.children[0].value!!.name == DUMMY_LOADING_NODE_NAME) {
+                        item.children.clear()
 
-                            loadCallTreeNodes(
-                                dbPath,
-                                commandId,
-                                threadId,
-                                item.getValue()!!.callPathId,
-                                item,
-                                totalTime
-                            )
+                        loadChildrenCalls(
+                            dbPath,
+                            commandId,
+                            threadId,
+                            item.value!!.callPathId!!,
+                            item,
+                            totalTime
+                        )
 
-                            if (item.children.isEmpty()) {
-                                item.children += TreeItem<CallTreeData?>(CallTreeData.stub("(No calls)"))
-                            }
+                        if (item.children.isEmpty()) {
+                            item.children += TreeItem(Call.stub("(No calls)"))
                         }
-                    })
+                    }
+                }
 
-                parentItem.getChildren().add(item)
+                parentItem.children += item
             }
         } catch (e: SQLException) {
             logger.error("Error loading call tree nodes: {}", e.message, e)
 
-            parentItem.getChildren().add(TreeItem<CallTreeData?>(CallTreeData.stub("Error loading data: " + e.message)))
+            parentItem.getChildren().add(TreeItem<Call?>(Call.stub("Error loading data: " + e.message)))
         }
     }
 
