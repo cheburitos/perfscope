@@ -1,0 +1,69 @@
+.perfscope-error-text {
+    -fx-fill: rgb(255, 30, 30);
+}
+
+.perfscope-call-tree-timestamp {
+    -fx-fill: rgb(161, 201, 52);
+}
+
+.perfscope-threads-list-item.search-highlighted {
+    -fx-fill: rgb(0, 255, 255);
+}
+
+.perfscope-bright-text {
+    -fx-fill: rgb(255, 191, 30);
+}
+
+.perfscope-call-tree-bracket {
+    -fx-fill: rgb(255,140,0);
+    -fx-font-weight: bold;
+}
+
+.perfscope-call-tree-number {
+    -fx-fill: rgb(74, 133, 186);
+}
+
+.perfscope-call-tree-null {
+    -fx-fill: rgb(255,140,0);
+}
+
+.perfscope-call-tree-printed.perfscope-call-tree-bold {
+    -fx-fill: rgb(152, 118, 170);
+}
+
+.perfscope-call-tree-return-value {
+
+}
+
+.perfscope-call-tree-method-name {
+    -fx-fill: rgb(0, 0, 0);
+}
+
+.perfscope-call-tree-method-name.perfscope-call-tree-instance-method-name {
+
+}
+
+.perfscope-call-tree-object-repr {
+    -fx-fill: rgb(169, 183, 198);
+}
+
+.perfscope-call-tree-arg-name {
+    -fx-fill: rgb(70, 70, 70);
+}
+
+.perfscope-call-tree-sep {
+    -fx-fill: rgb(70, 70, 70);
+}
+
+.perfscope-call-tree-sep {
+    -fx-text-fill: white;
+}
+
+.perfscope-call-tree-call-node {
+    -fx-background-color: rgb(225, 225, 225);
+    -fx-border-style: solid;
+    -fx-border-width: 2;
+    -fx-border-color: rgb(225, 225, 225);
+    -fx-min-height: 20;
+    -fx-max-height: 20;
+}

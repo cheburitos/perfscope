@@ -3,7 +3,6 @@ package com.perfscope.view
 import javafx.scene.control.TreeView
 import com.perfscope.model.Call
 import com.perfscope.db.DatabaseLoader
-import javafx.beans.value.ChangeListener
 import javafx.scene.control.TreeItem
 import javafx.scene.input.KeyCode
 import javafx.scene.input.ClipboardContent

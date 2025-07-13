@@ -4,17 +4,18 @@ import com.perfscope.model.Call
 import com.perfscope.util.Duration.Companion.ofNanos
 import javafx.geometry.Insets
 import javafx.geometry.Pos
-import javafx.scene.control.Label
 import javafx.scene.control.TreeCell
 import javafx.scene.layout.StackPane
 import javafx.scene.paint.Color
 import javafx.scene.shape.Rectangle
+import javafx.scene.text.Text
+import javafx.scene.text.TextFlow
 import kotlin.math.max
 
 class CallTreeCell : TreeCell<Call?>() {
     private val stack = StackPane()
     private val timeBar = Rectangle()
-    private val label = Label()
+    private val textFlow = TextFlow()
 
     init {
         timeBar.height = 20.0
@@ -22,31 +23,31 @@ class CallTreeCell : TreeCell<Call?>() {
         timeBar.arcWidth = 5.0
         timeBar.arcHeight = 5.0
 
-        stack.children.addAll(timeBar, label)
+        stack.children.addAll(timeBar, textFlow)
         stack.alignment = Pos.CENTER_LEFT
         stack.padding = Insets(2.0, 5.0, 2.0, 0.0)
 
         StackPane.setAlignment(timeBar, Pos.CENTER_LEFT)
         timeBar.translateX = 0.0
-
-        label.style = "-fx-font-weight: normal; -fx-font-size: 15px;"
     }
 
     override fun updateItem(item: Call?, empty: Boolean) {
         super.updateItem(item, empty)
+        textFlow.children.clear()
 
         if (empty || item == null) {
             text = null
             graphic = null
         } else {
-            val labelText: String?
+            val labelText = Text()
             if (item.totalTime != null) {
-                labelText = String.format("%s [%s]", item.name, ofNanos(item.totalTime))
+                labelText.text = String.format("%s [%s]", item.name, ofNanos(item.totalTime))
             } else {
-                labelText = item.name
+                labelText.text = item.name
             }
+            labelText.styleClass += "perfscope-call-tree"
 
-            label.text = labelText
+            textFlow.children += labelText
 
             if (item.timeNanos != null && item.timeNanos > 0) {
                 val ratio: Double = item.timeRatio
