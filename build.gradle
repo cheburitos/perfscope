@@ -78,8 +78,7 @@ dependencies {
     jooqGenerator 'org.xerial:sqlite-jdbc:3.43.0.0'
 
     implementation group: 'org.jetbrains.kotlinx', name: 'kotlinx-serialization-json', version: '1.4.1'
-
-    implementation group: 'org.rocksdb', name: 'rocksdbjni', version: '9.7.3'
+    implementation group: 'org.jetbrains.kotlinx', name: 'kotlinx-serialization-json', version: '1.4.1'
 
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'

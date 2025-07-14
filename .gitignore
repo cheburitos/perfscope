@@ -4,3 +4,4 @@
 /.gradle/
 /logs
 /src/main/java/com/perfscope/TestJooq.java
+/settings.json

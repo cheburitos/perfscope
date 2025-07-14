@@ -1,0 +1,10 @@
+.perfscope-bold-text {
+    -fx-font-weight: bold;
+}
+
+.perfscope-thread-list-item.system-font-text {
+}
+
+.zero-padding {
+    -fx-padding: 0 0 0 0;
+}

@@ -33,6 +33,7 @@ public class App extends Application {
     private String dbPath = "examples/pt_example";
     private DatabaseLoader databaseLoader;
     private DatabaseView databaseView;
+    private Context context = new Context();
 
     public static void main(String[] args) {
         logger.info("Starting PerfScope application");
@@ -44,14 +45,12 @@ public class App extends Application {
         logger.info("Initializing application UI");
         stage = primaryStage;
         stage.setTitle("PerfScope");
-
         databaseView = new DatabaseView();
-        
-        Scene scene = new Scene(createRootPane(), 1000, 700);
-        scene.getStylesheets().add(getClass().getResource("/styles.css").toExternalForm());
-        
+        Scene scene = context.getSceneRegistry().newScene(createRootPane(), 1000, 700);
         stage.setScene(scene);
         stage.show();
+
+        context.onAfterStart();
     }
     
     private BorderPane createRootPane() {
