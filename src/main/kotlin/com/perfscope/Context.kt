@@ -24,29 +24,29 @@ class Context {
         bindSettings()
     }
 
-    fun bindSettings() {
+    private fun bindSettings() {
         settings.systemFontName.addListener { _, _, _ ->
             fontStyleUpdater.update(sceneRegistry.scenes(), settings)
         }
         settings.systemFontSize.addListener { _, _, _ ->
             fontStyleUpdater.update(sceneRegistry.scenes(), settings)
         }
-        settings.recordingTreeFontSpacing.addListener { _, _, _ ->
+        settings.callTreeFontSpacing.addListener { _, _, _ ->
             fontStyleUpdater.update(sceneRegistry.scenes(), settings)
         }
-        settings.recordingTreeFontName.addListener { _, _, _ ->
+        settings.callTreeFontName.addListener { _, _, _ ->
             fontStyleUpdater.update(sceneRegistry.scenes(), settings)
         }
-        settings.recordingTreeFontSize.addListener { _, _, _ ->
+        settings.callTreeFontSize.addListener { _, _, _ ->
             fontStyleUpdater.update(sceneRegistry.scenes(), settings)
         }
-        settings.recordingTreeBoldElements.addListener { _, _, _ ->
+        settings.callTreeBoldElements.addListener { _, _, _ ->
             fontStyleUpdater.update(sceneRegistry.scenes(), settings)
         }
-        settings.recordingTreeBoldElements.addListener { _, _, _ ->
+        settings.callTreeBoldElements.addListener { _, _, _ ->
             fontStyleUpdater.update(sceneRegistry.scenes(), settings)
         }
-        settings.recordingListSpacing.addListener { _, _, _ ->
+        settings.threadListSpacing.addListener { _, _, _ ->
             recordingListStyleUpdater.update(sceneRegistry.scenes(), settings)
         }
         settings.theme.addListener { _, _, theme ->

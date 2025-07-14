@@ -58,15 +58,15 @@
     -fx-fill: rgb(161, 201, 52);
 }
 
-.perfscope-threads-list-item {
+.perfscope-thread-list-item {
     -fx-fill: rgb(169, 183, 198);
 }
 
-.perfscope-threads-list-item.search-highlighted {
+.perfscope-thread-list-item.search-highlighted {
     -fx-fill: rgb(0, 255, 255);
 }
 
-.perfscope-threads-list-item.selected {
+.perfscope-thread-list-item.selected {
     -fx-background-color: rgb(0, 80, 100);
 }
 

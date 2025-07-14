@@ -6,7 +6,7 @@
     -fx-fill: rgb(161, 201, 52);
 }
 
-.perfscope-threads-list-item.search-highlighted {
+.perfscope-thread-list-item.search-highlighted {
     -fx-fill: rgb(0, 255, 255);
 }
 

@@ -14,7 +14,7 @@ class SettingsFileStorage {
     fun read(): Settings {
         val settings = if (file.exists()) {
             val settingsJson = file.readText(Charsets.UTF_8)
-            val json = Json { /*JsonBuilder.ignoreUnknownKeys = true*/ }
+            val json = Json { ignoreUnknownKeys = true }
             json.decodeFromString(settingsJson)
         } else {
             val settings = Settings()

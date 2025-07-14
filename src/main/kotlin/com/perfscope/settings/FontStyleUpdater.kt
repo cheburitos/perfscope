@@ -29,21 +29,21 @@ class FontStyleUpdater {
             -fx-font-size: ${settings.systemFontSize.get()}px;
         }
         .perfscope-call-tree {
-            -fx-font-family: ${settings.recordingTreeFontName.get()};
-            -fx-font-size: ${settings.recordingTreeFontSize.get()}px;
+            -fx-font-family: ${settings.callTreeFontName.get()};
+            -fx-font-size: ${settings.callTreeFontSize.get()}px;
         }
         .perfscope-call-tree-call-node {
             -fx-min-height: -1;
             -fx-max-height: -1;
         }
         .perfscope-call-tree-view {
-            -fx-fixed-cell-size: ${settings.recordingTreeFontSize.get() + settings.recordingTreeFontSpacing.get()}px;
+            -fx-fixed-cell-size: ${settings.callTreeFontSize.get() + settings.callTreeFontSpacing.get()}px;
         }
         .perfscope-smaller-text {
-            -fx-font-size: ${(settings.recordingTreeFontSize.get() * 0.8).toInt()}px;
+            -fx-font-size: ${(settings.callTreeFontSize.get() * 0.8).toInt()}px;
         }
         .perfscope-call-tree-bold {
-            -fx-font-weight: ${(if (settings.recordingTreeBoldElements.get()) "bold" else "normal")};
+            -fx-font-weight: ${(if (settings.callTreeBoldElements.get()) "bold" else "normal")};
         }
         """
     }
