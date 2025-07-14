@@ -2,7 +2,7 @@ package com.perfscope;
 
 import com.perfscope.db.DatabaseLoader;
 import com.perfscope.model.Command;
-import com.perfscope.view.DatabaseView;
+import com.perfscope.view.CommandTabPane;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -32,7 +32,6 @@ public class App extends Application {
 
     private String dbPath = "examples/pt_example";
     private DatabaseLoader databaseLoader;
-    private DatabaseView databaseView;
     private Context context = new Context();
 
     public static void main(String[] args) {
@@ -45,7 +44,6 @@ public class App extends Application {
         logger.info("Initializing application UI");
         stage = primaryStage;
         stage.setTitle("PerfScope");
-        databaseView = new DatabaseView();
         Scene scene = context.getSceneRegistry().newScene(createRootPane(), 1000, 700);
         stage.setScene(scene);
         stage.show();
@@ -77,9 +75,7 @@ public class App extends Application {
         root.setTop(menuBar);
         root.setBottom(statusBar);
 
-        TabPane tabPane = new TabPane();
-        tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
-        root.setCenter(tabPane);
+        root.setCenter(new CommandTabPane());
         
         return root;
     }
@@ -113,8 +109,8 @@ public class App extends Application {
             dbPath = file.getAbsolutePath();
             logger.info("Opening database: {}", dbPath);
 
-            TabPane tabPane = (TabPane) ((BorderPane) stage.getScene().getRoot()).getCenter();
-            tabPane.getTabs().clear();
+            CommandTabPane commandTabPane = (CommandTabPane) ((BorderPane) stage.getScene().getRoot()).getCenter();
+            commandTabPane.clear();
             
             updateStatus("Loading database: " + file.getName());
 
@@ -130,11 +126,7 @@ public class App extends Application {
                     // Update UI on JavaFX thread
                     Platform.runLater(() -> {
                         for (Command command : commsWithCalls) {
-                            Tab tab = new Tab();
-                            tab.setText(command.getCommand() + " " + " (" + command.getId() + ")");
-                            tab.setContent(databaseView.createCommView(dbPath, command));
-                            tab.setClosable(false);
-                            tabPane.getTabs().add(tab);
+                            commandTabPane.addCommandTab(dbPath, command);
                         }
                         updateStatus("Database loaded: " + file.getName());
                     });
@@ -146,7 +138,7 @@ public class App extends Application {
                         Tab errorTab = new Tab("Error");
                         errorTab.setContent(new Label("Database error: " + e.getMessage()));
                         errorTab.setClosable(false);
-                        tabPane.getTabs().add(errorTab);
+                        commandTabPane.getTabs().add(errorTab);
                         updateStatus("Error loading database");
                     });
                 }
