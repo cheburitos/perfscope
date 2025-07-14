@@ -10,7 +10,7 @@ import kotlin.collections.indices
 import kotlin.text.contains
 import kotlin.text.toByteArray
 
-class RecordingListStyleUpdater() {
+class ThreadListStyleUpdater {
 
     companion object {
         private const val STYLE_PREFIX = "recording-list-stylesheet"

@@ -28,10 +28,8 @@ class CommandTabPane : TabPane() {
     private fun createCommandTabContent(dbPath: String, command: Command): BorderPane {
         val tabContent = BorderPane()
 
-        val threadListView = ListView<String?>()
-        for (thread in command.threads) {
-            threadListView.items += String.format("PID: %d, TID: %d", thread.pid, thread.tid)
-        }
+        val threadListView = ThreadListView()
+        command.threads.forEach { threadListView.add(it) }
 
         val callTreeView = CallTreeView(dbPath)
 
@@ -48,15 +46,15 @@ class CommandTabPane : TabPane() {
         val threadsLabel = Label("Threads")
         threadsLabel.style = "-fx-font-weight: bold; -fx-padding: 5px;"
 
-        val threadBox = VBox()
-        threadBox.children.addAll(threadsLabel, threadListView)
+        val threadListBox = VBox()
+        threadListBox.children.addAll(threadsLabel, threadListView)
         VBox.setVgrow(threadListView, Priority.ALWAYS)
 
-        threadBox.minWidth = 100.0
-        threadBox.maxWidth = 300.0
+        threadListBox.minWidth = 100.0
+        threadListBox.maxWidth = 300.0
 
         val splitPane = SplitPane()
-        splitPane.items.addAll(threadBox, callTreeView)
+        splitPane.items.addAll(threadListBox, callTreeView)
         splitPane.setDividerPositions(0.2)
 
         tabContent.center = splitPane

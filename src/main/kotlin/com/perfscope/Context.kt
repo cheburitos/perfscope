@@ -1,7 +1,7 @@
 package com.perfscope
 
 import com.perfscope.settings.FontStyleUpdater
-import com.perfscope.settings.RecordingListStyleUpdater
+import com.perfscope.settings.ThreadListStyleUpdater
 import com.perfscope.settings.Settings
 import com.perfscope.settings.SettingsFileStorage
 import com.perfscope.settings.Theme
@@ -14,7 +14,7 @@ class Context {
     val settingsFileStorage = SettingsFileStorage()
     val sceneRegistry: SceneRegistry
     val fontStyleUpdater = FontStyleUpdater()
-    val recordingListStyleUpdater = RecordingListStyleUpdater()
+    val threadListStyleUpdater = ThreadListStyleUpdater()
     val settings: Settings
 
     init {
@@ -47,7 +47,7 @@ class Context {
             fontStyleUpdater.update(sceneRegistry.scenes(), settings)
         }
         settings.threadListSpacing.addListener { _, _, _ ->
-            recordingListStyleUpdater.update(sceneRegistry.scenes(), settings)
+            threadListStyleUpdater.update(sceneRegistry.scenes(), settings)
         }
         settings.theme.addListener { _, _, theme ->
             themeManager.changeTheme(Theme.valueOf(theme))
@@ -57,7 +57,7 @@ class Context {
     fun onAfterStart() {
         Platform.runLater {
             fontStyleUpdater.update(App.stage.scene, settings)
-            recordingListStyleUpdater.update(sceneRegistry.scenes(), settings)
+            threadListStyleUpdater.update(sceneRegistry.scenes(), settings)
         }
 
         themeManager.changeTheme(Theme.valueOf(settings.theme.get()))
