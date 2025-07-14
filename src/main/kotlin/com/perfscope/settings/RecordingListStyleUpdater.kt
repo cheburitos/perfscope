@@ -18,7 +18,7 @@ class RecordingListStyleUpdater() {
 
     private fun buildStyleSheet(settings: Settings): String {
         return """
-        .perfscope-threads-list-item {
+        .perfscope-thread-list-item {
             -fx-padding: ${settings.threadListSpacing.get()}px;
         }
         """
