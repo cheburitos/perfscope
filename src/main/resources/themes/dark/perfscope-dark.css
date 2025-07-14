@@ -103,10 +103,6 @@
     -fx-fill: rgb(169, 183, 198);
 }
 
-.perfscope-call-tree-thrown {
-    -fx-fill: rgb(255, 84, 80);
-}
-
 .perfscope-call-tree-method-name.perfscope-call-tree-instance-method-name {
 }
 

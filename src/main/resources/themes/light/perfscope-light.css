@@ -23,10 +23,6 @@
     -fx-fill: rgb(74, 133, 186);
 }
 
-.perfscope-call-tree-null {
-    -fx-fill: rgb(255,140,0);
-}
-
 .perfscope-call-tree-printed.perfscope-call-tree-bold {
     -fx-fill: rgb(152, 118, 170);
 }
