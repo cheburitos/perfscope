@@ -40,16 +40,12 @@ class DatabaseConnectionHolder(dbPath: String) : AutoCloseable {
 
         override fun executeStart(ctx: ExecuteContext) {
             startTime = System.nanoTime()
-            if (logger.isDebugEnabled) {
-                logger.debug("Executing SQL: {}", ctx.sql())
-            }
+            logger.info("Executing SQL: ${ctx.sql()}")
         }
 
         override fun executeEnd(ctx: ExecuteContext?) {
-            if (logger.isDebugEnabled) {
-                val elapsedTime: Long = System.nanoTime() - startTime
-                logger.debug("SQL execution completed in {} ms", elapsedTime / 1000000.0)
-            }
+            val elapsedTime: Long = System.nanoTime() - startTime
+            logger.info("SQL execution completed in ${elapsedTime / 1000000.0} ms")
         }
 
         override fun exception(ctx: ExecuteContext) {

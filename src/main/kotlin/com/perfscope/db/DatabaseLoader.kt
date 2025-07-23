@@ -89,6 +89,24 @@ class DatabaseLoader(private val dbPath: String) {
         }
     }
 
+    fun search(commandId: Long, threadId: Long, searchTerm: String) : Boolean {
+        DatabaseConnectionHolder(dbPath).use { connection: DatabaseConnectionHolder ->
+            return connection.context.select(THREADS.TID)
+                .from(CALLS)
+                .innerJoin(THREADS).on(CALLS.THREAD_ID.eq(THREADS.ID.cast(Long::class.java)))
+                .innerJoin(CALL_PATHS).on(CALLS.CALL_PATH_ID.eq(CALL_PATHS.ID.cast(Long::class.java)))
+                .innerJoin(SYMBOLS).on(CALL_PATHS.SYMBOL_ID.eq(SYMBOLS.ID.cast(Long::class.java)))
+                .where(CALLS.COMM_ID.eq(commandId))
+                .and(CALLS.THREAD_ID.eq(threadId))
+                .and(SYMBOLS.NAME.like("%${searchTerm}%"))
+                .limit(1)
+                .fetch()
+                .map { (id) -> id }
+                .isEmpty()
+                .not()
+        }
+    }
+
     fun calcTotalTime(commandId: Long, threadId: Long): Duration {
         DatabaseConnectionHolder(dbPath).use { connection: DatabaseConnectionHolder ->
             val totalDurationNanos = connection.context.select(DSL.sum(CALLS.RETURN_TIME - CALLS.CALL_TIME).cast(Long::class.java))
@@ -99,7 +117,7 @@ class DatabaseLoader(private val dbPath: String) {
                 .groupBy(CALLS.CALL_PATH_ID)
                 .fetch()
                 .map { (value) -> value }
-                .sumOf { it -> it }
+                .sumOf { it }
             return totalDurationNanos.toDuration(DurationUnit.NANOSECONDS)
         }
     }
